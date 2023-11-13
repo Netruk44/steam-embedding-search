@@ -1,0 +1,6 @@
+tqdm
+torch
+transformers
+sentence-transformers
+InstructorEmbedding
+click
