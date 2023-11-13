@@ -1,18 +1,21 @@
 
 #!/bin/bash
 
+venv_dir=".venv_01"
+
 # Check if .venv directory exists
-if [ -d ".venv" ]; then
+if [ -d "$venv_dir" ]; then
   echo "The .venv directory already exists."
   exit 1
 fi
 
 # Create .venv directory
 echo "Creating .venv directory..."
-python3 -m venv .venv
+python3 -m venv "$venv_dir"
 
 # Activate .venv
-source .venv/bin/activate
+echo "Activating .venv..."
+source "$venv_dir/bin/activate"
 
 # Install packages from requirements.txt
 echo "Installing packages from requirements.txt..."
@@ -23,4 +26,4 @@ deactivate
 
 echo ""
 echo "Environment created, activate with:"
-echo "source .venv/bin/activate"
+echo "source \"$venv_dir/bin/activate\""
