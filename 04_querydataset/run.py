@@ -19,8 +19,9 @@ LOGGING_FORMAT = COLOR_DARK_GREY + '[%(asctime)s - %(name)s]' + COLOR_RESET + CO
 @click.option('--query', required=True, help='Query to search for')
 @click.option('--index', default=None, help='Path to index file')
 @click.option('--embed-query', default='Represent a video game that has a description of:', help='Embedding instruction for query')
+@click.option('--model-name', default='hkunlp/instructor-large', help='Name of the instructor model to use')
 @click.option('--verbose', is_flag=True, help='Print verbose output')
-def main(db, query, index, embed_query, verbose):
+def main(db, query, index, embed_query, model_name, verbose):
     logging.basicConfig(format = LOGGING_FORMAT, level = logging.INFO if not verbose else logging.DEBUG)
 
     # Load input sqlite database
@@ -41,7 +42,7 @@ def main(db, query, index, embed_query, verbose):
         # Models:
         # - hkunlp/instructor-large : ~2.5 GB VRAM
         # - hkunlp/instructor-xl    : ~6 GB VRAM
-        model_name = "hkunlp/instructor-large",
+        model_name = model_name,
     )
 
     # Get query embedding

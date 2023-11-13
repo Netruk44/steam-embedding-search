@@ -18,8 +18,9 @@ LOGGING_FORMAT = COLOR_DARK_GREY + '[%(asctime)s - %(name)s]' + COLOR_RESET + CO
 #@click.option('--output', required=True, help='Path to output database file')
 @click.option('--embed-description', default='Represent a video game that has a description of:', help='Embedding instruction for game descriptions')
 @click.option('--embed-review', default='Represent a video game that has a review of: ', help='Embedding instruction for game reviews')
+@click.option('--model-name', default='hkunlp/instructor-large', help='Name of the instructor model to use')
 @click.option('--verbose', is_flag=True, help='Print verbose output')
-def main(db, embed_description, embed_review, verbose):
+def main(db, embed_description, embed_review, model_name, verbose):
     logging.basicConfig(format = LOGGING_FORMAT, level = logging.INFO if not verbose else logging.DEBUG)
     # Load input sqlite database
     # Check output tables & create if necessary
@@ -54,7 +55,7 @@ def main(db, embed_description, embed_review, verbose):
         # Models:
         # - hkunlp/instructor-large : ~2.5 GB VRAM
         # - hkunlp/instructor-xl    : ~6 GB VRAM
-        model_name = "hkunlp/instructor-large",
+        model_name = model_name,
     )
 
     # Update game descriptions
