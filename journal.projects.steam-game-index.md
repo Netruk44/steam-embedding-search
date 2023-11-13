@@ -38,10 +38,14 @@ Each top-level bullet point is probably a discrete task.
         * Returns a (~10 MB) json object with:
         * `obj['applist']['apps'][<index>]['appid']` - App id
         * `obj['applist']['apps'][<index>]['name']` - Name
-* [ ] Process API inputs into some kind of "source truth" document
+* [X] Process API inputs into some kind of "source truth" document
     * Basically just a reflection of what the API returned
     * Probably stored in some kind of database
     * Or possibly just a bunch of json files on disk
+    * **TODO**: Extract out common data into a base class
+        - Add SteamGame class
+        - Maybe add ItchIoGame class?
+        - And other stores.
 * [ ] Create embeddings for description and reviews
     * Using separate embedding instructions, embed store description and reviews
         * "Represent a video game that has a description of: "
