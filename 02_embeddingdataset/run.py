@@ -121,7 +121,7 @@ def update_review_embeddings(conn, instructor):
         new_reviews = all_review_recommendationids - output_recommendationids
 
         # Update embeddings
-        logging.verbose(f"Updating {len(new_reviews)} review embeddings for appid {input_appid}")
+        logging.debug(f"Updating {len(new_reviews)} review embeddings for appid {input_appid}")
         for index, recommendationid in enumerate(new_reviews):
             bar.set_postfix(appid=input_appid, progress=int(index / len(new_reviews) * 100))
             # Get review
