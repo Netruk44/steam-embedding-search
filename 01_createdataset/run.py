@@ -3,6 +3,7 @@ import sqlite3
 import tqdm
 import logging
 import json
+import random
 
 COLOR_DARK_GREY = "\x1b[38;5;240m"
 COLOR_BOLD = "\x1b[1m"
@@ -250,6 +251,15 @@ def main():
     new_gamelist = [game for game in gamelist if game["appid"] not in known_appids]
     logging.info("Found " + str(len(new_gamelist)) + " new games on Steam.")
     insert_gamelist(conn, new_gamelist)
+
+
+    # Random subset
+    limit = None # Do not comment out
+    limit = 5000
+
+    if limit != None:
+        random.shuffle(gamelist)
+        gamelist = gamelist[:limit]
     
     # Update app details
     for game in tqdm.tqdm(gamelist, desc = "Updating app details"):
@@ -258,6 +268,8 @@ def main():
             try:
                 appdetails = get_app_details(appid)
                 insert_appdetails(conn, appid, appdetails)
+            except KeyboardInterrupt:
+                raise
             except:
                 logging.warning("Failed to get app details for appid " + str(appid) + ". Skipping...")
                 continue
