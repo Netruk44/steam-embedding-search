@@ -113,15 +113,17 @@ def update_review_embeddings(conn, instructor):
     input_appids = sqlite_helpers.get_input_appids_for_reviews(conn)
 
     # Update reviews
-    for input_appid in tqdm.tqdm(input_appids, desc = "Updating review embeddings"):
+    bar = tqdm.tqdm(input_appids, desc = "Updating review embeddings")
+    for input_appid in bar:
         # Get reviews
         all_reviews = sqlite_helpers.get_input_reviews_for_appid(conn, input_appid)
         all_review_recommendationids = set(all_reviews.keys())
         new_reviews = all_review_recommendationids - output_recommendationids
 
         # Update embeddings
-        logging.info(f"Updating {len(new_reviews)} review embeddings for appid {input_appid}")
-        for recommendationid in tqdm.tqdm(new_reviews, desc = "Embeddings for " + str(input_appid)):
+        logging.verbose(f"Updating {len(new_reviews)} review embeddings for appid {input_appid}")
+        for index, recommendationid in enumerate(new_reviews):
+            bar.set_postfix(appid=input_appid, progress=int(index / len(new_reviews) * 100)
             # Get review
             review = all_reviews[recommendationid]
             # Generate embeddings
