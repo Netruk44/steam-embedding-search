@@ -89,6 +89,11 @@ def create_tables(conn):
         )
     ''')
 
+    # Add index to 'appdetails' for type
+    c.execute('''
+        CREATE INDEX IF NOT EXISTS appdetails_type_index ON appdetails(type)
+    ''')
+
     # Create table 'appreviews'
     c.execute('''
         CREATE TABLE IF NOT EXISTS appreviews (
@@ -98,6 +103,11 @@ def create_tables(conn):
             review TEXT,
             FOREIGN KEY(appid) REFERENCES gamelist(appid)
         )
+    ''')
+
+    # Add index to 'appreviews' for appid
+    c.execute('''
+        CREATE INDEX IF NOT EXISTS appreviews_appid_index ON appreviews(appid)
     ''')
 
     conn.commit()
