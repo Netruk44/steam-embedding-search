@@ -16,8 +16,8 @@ LOGGING_FORMAT = COLOR_DARK_GREY + '[%(asctime)s - %(name)s]' + COLOR_RESET + CO
 @click.command()
 @click.option('--db', required=True, help='Path to SQLite database')
 #@click.option('--output', required=True, help='Path to output database file')
-@click.option('--embed-description', default='Represent a video game that has a description of:', help='Embedding instruction for game descriptions')
-@click.option('--embed-review', default='Represent a video game that has a review of: ', help='Embedding instruction for game reviews')
+@click.option('--embed-description', default='Represent a video game that is self-described as:', help='Embedding instruction for game descriptions')
+@click.option('--embed-review', default='Represent a video game that a player would review as: ', help='Embedding instruction for game reviews')
 @click.option('--model-name', default='hkunlp/instructor-large', help='Name of the instructor model to use')
 @click.option('--verbose', is_flag=True, help='Print verbose output')
 def main(db, embed_description, embed_review, model_name, verbose):
