@@ -46,11 +46,11 @@ Each top-level bullet point is probably a discrete task.
         - Add SteamGame class
         - Maybe add ItchIoGame class?
         - And other stores.
-* [ ] Create embeddings for description and reviews
+* [X] Create embeddings for description and reviews
     * Using separate embedding instructions, embed store description and reviews
         * "Represent a video game that has a description of: "
         * "Represent a video game that has a review of: "
-* [ ] **Test** Query the embeddings for a game
+* [X] **Test** Query the embeddings for a game
     * "Represent a video game with the description of: "
     * Evaluate to see if I want to continue with the project
 
