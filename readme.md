@@ -2,21 +2,29 @@
 ## Description
 Search for Steam games based off ✨vibe✨
 
-Describe the kind of game you're looking for, and get a list of games that closest match the vibe you're looking for.
+Describe the kind of game you're looking for, and get a list of games that closest match the vibe you're looking for based off the store description and reviews.
 
 ## Requirements
 - Python
 - Linux or Mac
     - Ability to execute `.sh` scripts.
     - Windows untested, might work with WSL. (GPU support unknown/unlikely)
+- ~20 GB disk space to hold libraries and models.
     
 ### Recommended
 - A GPU with > 6 GB VRAM
 - Lots of time 😊
 
+## Install
+- Clone this repository.
+- Install Python, if you don't already have it.
+- ~~Download prepopulated database [here](#) (*X.XX GB*).~~
+    - ~~Will let you skip to step 04, bypassing GPU requirement and many hours of calling Steam API.~~
+    - Not yet available.
+
 ## Usage
-- There are multiple numbered folders in this repository.
-- In each directory, there is an `init.sh` script that will create a virtual environment directory `.venv_0[1-4]` and install the required dependencies for that step.
+- There are multiple numbered folders in this repository that should be run in order.
+- In each directory, there is an `init.sh` script that will create a virtual environment directory (e.g. `.venv_01` for step 01) and install the required dependencies for that step.
 - Once the virtual environment is created, activate it (e.g. `source .venv_01/bin/activate`), then run `python run.py`.
 - The first step will initialize and populate a database.
 - You should use the same database file for all steps.
@@ -51,6 +59,7 @@ Describe the kind of game you're looking for, and get a list of games that close
 - **Overview**: Queries the database for games that match a given query.
 - Takes about 10 seconds to complete and return results.
     - Most of the time spent in this script is loading Instructor to generate an embedding for your query.
+- **Important**: Use the same `--model-name` you used to generate the database in step 02.
 - You can use `--query-for-type <type>` to limit search to `all`, `description` or `review` embeddings.
 - Example invocation: `python run.py --db ./steam.db --query "I want a game that is like a mix of Minecraft and Skyrim"`
 
