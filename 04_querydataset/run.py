@@ -18,10 +18,11 @@ LOGGING_FORMAT = COLOR_DARK_GREY + '[%(asctime)s - %(name)s]' + COLOR_RESET + CO
 @click.option('--db', required=True, help='Path to SQLite database')
 @click.option('--query', required=True, help='Query to search for')
 @click.option('--index', default=None, help='Path to index file')
+@click.option('--query-for-type', default='all', help='Type of data to search for (all, description, review)')
 @click.option('--embed-query', default='Represent a video game that has a description of:', help='Embedding instruction for query')
 @click.option('--model-name', default='hkunlp/instructor-large', help='Name of the instructor model to use')
 @click.option('--verbose', is_flag=True, help='Print verbose output')
-def main(db, query, index, embed_query, model_name, verbose):
+def main(db, query, index, query_for_type, embed_query, model_name, verbose):
     logging.basicConfig(format = LOGGING_FORMAT, level = logging.INFO if not verbose else logging.DEBUG)
 
     # Load input sqlite database
@@ -59,7 +60,7 @@ def main(db, query, index, embed_query, model_name, verbose):
         results = []
     else:
         # Need to do a linear search
-        results = slow_search(conn, query_embed, max_results=10)
+        results = slow_search(conn, query_embed, query_for_type, max_results=10)
     '''
     results = [
         {
@@ -100,35 +101,43 @@ def add_to_capped_list(list_to_add_to: List[dict], item_to_add: dict, max_length
         lowest_score = min(list_to_add_to, key=lambda x: x['score'])
         list_to_add_to.remove(lowest_score)
 
-def slow_search(conn, query_embed, max_results=10):
+def slow_search(conn, query_embed, query_for_type, max_results=10):
     matches = []
+    logging.debug(f"Searching for {query_for_type} matches")
 
     # Store Description Search
-    bar = tqdm.tqdm(total=sqlite_helpers.get_count_embeddings_for_descriptions(conn), desc="Store Descriptions")
+    if query_for_type == 'all' or query_for_type == 'description':
+        bar = tqdm.tqdm(total=sqlite_helpers.get_count_embeddings_for_descriptions(conn), desc="Store Descriptions")
 
-    for current_page in sqlite_helpers.get_paginated_embeddings_for_descriptions(conn, page_size=100):
-        for appid, embeddings in current_page.items():
-            score = compare_all_embeddings_take_max(embeddings, query_embed)
-            name = sqlite_helpers.get_name_for_appid(conn, appid)
+        for current_page in sqlite_helpers.get_paginated_embeddings_for_descriptions(conn, page_size=100):
+            for appid, embeddings in current_page.items():
+                score = compare_all_embeddings_take_max(embeddings, query_embed)
+                name = sqlite_helpers.get_name_for_appid(conn, appid)
 
-            add_to_capped_list(matches, {
-                'appid': appid,
-                'name': name,
-                'match_type': 'description',
-                'score': score,
-            }, max_results)
+                add_to_capped_list(matches, {
+                    'appid': appid,
+                    'name': name,
+                    'match_type': 'description',
+                    'score': score,
+                }, max_results)
 
-            bar.update(1)
-    
-    bar.close()
-    
-    # Review search
-    bar = tqdm.tqdm(total=sqlite_helpers.get_count_embeddings_for_reviews(conn), desc="Reviews")
+                bar.update(1)
+        
+        bar.close()
 
-    for current_page in sqlite_helpers.get_paginated_embeddings_for_reviews(conn, page_size=100):
-        for recommendationid, embeddings in current_page.items():
-            score = compare_all_embeddings_take_max(embeddings, query_embed)
-            appid = sqlite_helpers.get_appid_for_recommendationid(conn, recommendationid)
+    # Review search v2 - Calculate average embedding for all reviews
+    if query_for_type == 'all' or query_for_type == 'review':
+        appids_with_reviews = sqlite_helpers.get_review_appids(conn)
+
+        for appid in tqdm.tqdm(appids_with_reviews, desc="Reviews"):
+            all_review_embeddings = sqlite_helpers.get_review_embeddings_for_appid(conn, appid)
+            flat_embeddings = []
+
+            for review_id in all_review_embeddings:
+                flat_embeddings.extend(all_review_embeddings[review_id])
+            
+            average_embedding = np.sum(flat_embeddings, axis=0) / len(flat_embeddings)
+            score = cosine_similarity(average_embedding, query_embed)
             name = sqlite_helpers.get_name_for_appid(conn, appid)
 
             add_to_capped_list(matches, {
@@ -138,10 +147,40 @@ def slow_search(conn, query_embed, max_results=10):
                 'score': score,
             }, max_results)
 
-            bar.update(1)
-    
-    bar.close()
+    # Review search v1 - Compare each review to the query individually
+    #if query_for_type == 'all' or query_for_type == 'review':
+    if False:
+        bar = tqdm.tqdm(total=sqlite_helpers.get_count_embeddings_for_reviews(conn), desc="Reviews")
 
+        for current_page in sqlite_helpers.get_paginated_embeddings_for_reviews(conn, page_size=100):
+            total_score = 0
+            for recommendationid, embeddings in current_page.items():
+                score = compare_all_embeddings_take_max(embeddings, query_embed)
+                total_score += score
+                appid = sqlite_helpers.get_appid_for_recommendationid(conn, recommendationid)
+                name = sqlite_helpers.get_name_for_appid(conn, appid)
+
+                add_to_capped_list(matches, {
+                    'appid': appid,
+                    'name': name,
+                    'match_type': 'review',
+                    'score': score,
+                }, max_results)
+
+                bar.update(1)
+            
+            # Add average score for all reviews
+            #add_to_capped_list(matches, {
+            #    'appid': appid,
+            #    'name': name,
+            #    'match_type': 'review',
+            #    'score': total_score / len(current_page),
+            #}, max_results)
+        
+        bar.close()
+
+    # Order by score
+    matches = sorted(matches, key=lambda x: x['score'], reverse=True)
 
     return matches
 

@@ -56,7 +56,9 @@ def check_input_db_tables(conn: sqlite3.Connection) -> bool:
         bool: True if the tables exist, False otherwise.
     """
     logging.debug(f"Checking if required tables exist in input SQLite database.")
-    required_tables = ["description_embeddings", "review_embeddings", "gamelist"]
+    #required_tables = ["description_embeddings", "review_embeddings", "gamelist"]
+    # Updated for hack
+    required_tables = ["description_embeddings", "review_embeddings", "gamelist", "appreviews"]
     
     tables_exist = [check_table(conn, table_name) for table_name in required_tables]
     
@@ -228,3 +230,49 @@ def get_name_for_appid(conn: sqlite3.Connection, appid: int) -> str:
     c.close()
 
     return results
+
+def get_review_appids(conn: sqlite3.Connection) -> Set[int]:
+    """
+    Gets all the review app ids from the input SQLite database.
+
+    Args:
+        conn (sqlite3.Connection): A connection to the SQLite database.
+
+    Returns:
+        Set[int]: A set of appids for reviews.
+    """
+    logging.debug(f"Getting all appids for reviews from input SQLite database.")
+    c = conn.cursor()
+
+    c.execute(f'''
+        SELECT appid FROM appreviews
+    ''')
+    results = c.fetchall()
+
+    c.close()
+
+    return set([appid for appid, in results])
+
+def get_review_embeddings_for_appid(conn: sqlite3.Connection, appid: int) -> Dict[int,List[List[float]]]:
+    """
+    Gets all the review embeddings for the given appid from the input SQLite database.
+
+    Args:
+        conn (sqlite3.Connection): A connection to the SQLite database.
+        appid (int): The appid to get the review embeddings for.
+
+    Returns:
+        Dict[int, List[List[float]]]: A dictionary mapping recommendationid to the embedding for the review.
+    """
+    logging.debug(f"Getting all review embeddings for appid {appid} from input SQLite database.")
+    c = conn.cursor()
+
+    ## HACK: Using external table (appreviews) to get appid
+    c.execute(f'''
+        SELECT review_embeddings.recommendationid, embedding FROM review_embeddings INNER JOIN appreviews USING (recommendationid) WHERE appid = ?
+    ''', (appid,))
+    results = c.fetchall()
+
+    c.close()
+
+    return {recommendationid: pickle.loads(embedding) for recommendationid, embedding in results}
