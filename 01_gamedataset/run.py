@@ -273,8 +273,10 @@ def main():
         gamelist = gamelist[:limit]
     
     # Update app details
-    for game in tqdm.tqdm(gamelist, desc = "Updating app details"):
+    bar = tqdm.tqdm(gamelist, desc = "Updating app details", smoothing = 0.0)
+    for game in bar:
         appid = game["appid"]
+        bar.set_postfix(appid=str(appid))
         if not appdetails_exists(conn, appid):
             try:
                 appdetails = get_app_details(appid)
@@ -288,8 +290,10 @@ def main():
             logging.debug("App details for appid " + str(appid) + " already exist in SQLite database. Skipping...")
 
     # Get app reviews
-    for game in tqdm.tqdm(gamelist, desc = "Updating app reviews"):
+    bar = tqdm.tqdm(gamelist, desc = "Getting app reviews", smoothing = 0.0)
+    for game in bar:
         appid = game["appid"]
+        bar.set_postfix(appid=str(appid))
         known_reviews = set(get_appreviews(conn, appid))
 
         if len(known_reviews) < 100:

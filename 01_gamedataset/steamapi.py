@@ -40,7 +40,7 @@ def get_app_details(appid):
     Returns:
         dict: A dictionary containing the details of the game.
     '''
-    logging.info("Getting details for appid " + str(appid))
+    logging.debug("Getting details for appid " + str(appid))
     url = "https://store.steampowered.com/api/appdetails"
     response = call_api(url, params = {"appids": appid})
     game_details = response[str(appid)]
