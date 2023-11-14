@@ -25,7 +25,7 @@ Describe the kind of game you're looking for, and get a list of games that close
 ## Usage
 - There are multiple numbered folders in this repository that should be run in order.
 - In each directory, there is an `init.sh` script that will create a virtual environment directory (e.g. `.venv_01` for step 01) and install the required dependencies for that step.
-- Once the virtual environment is created, activate it (e.g. `source .venv_01/bin/activate`), then run `python run.py`.
+- Once the virtual environment is created, activate it (e.g. `source ./.venv_01/bin/activate`), then run `python run.py`.
 - The first step will initialize and populate a database.
 - You should use the same database file for all steps.
     - Scripts will only add/process new data for that step, so you can run them multiple times as you add more data to the database.
