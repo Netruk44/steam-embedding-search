@@ -82,7 +82,7 @@ def main(db, query, index, query_for_type, embed_query, model_name, verbose):
     print(f"Results for query: {query}")
     for result in results:
         print(f"  {result['appid']}: {result['name']} ({result['match_type']})")
-        print(f"    Score: {result['score']}")
+        print(f"    Match: {result['score'] * 100.0:.2f}%")
     
     # Close connection
     conn.close()
