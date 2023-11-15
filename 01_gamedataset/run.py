@@ -331,15 +331,18 @@ def main():
         create_tables(conn)
 
     # Update game list
-    gamelist = set(get_game_list())
+    gamelist = get_game_list()
     known_appids = set(get_known_appids(conn))
-    new_gamelist = gamelist - known_appids
+    new_gamelist = [game for game in gamelist if game["appid"] not in known_appids]
     logging.info("Found " + str(len(new_gamelist)) + " new games on Steam.")
     insert_gamelist(conn, new_gamelist)
 
+    # Update known_appids with new appids
+    known_appids = set(get_known_appids(conn))
+
     # Games without app details
     games_with_appdetails = set(get_appids_with_appdetails(conn))
-    games_need_appdetails = known_appids - games_with_appdetails
+    games_need_appdetails = list(known_appids - games_with_appdetails)
     logging.info("Found " + str(len(games_need_appdetails)) + " games without app details.")
 
     # Random subset
@@ -353,8 +356,7 @@ def main():
     
     # Update app details
     bar = tqdm.tqdm(games_need_appdetails, desc = "Updating app details", smoothing = 0.0)
-    for game in bar:
-        appid = game["appid"]
+    for appid in bar:
         bar.set_postfix(appid=str(appid))
         if not appdetails_exists(conn, appid):
             try:
@@ -369,13 +371,12 @@ def main():
             logging.debug("App details for appid " + str(appid) + " already exist in SQLite database. Skipping...")
 
     # Games without app reviews
-    games_need_reviews = set(get_appids_with_low_number_of_reviews(conn, 100))
+    games_need_reviews = list(get_appids_with_low_number_of_reviews(conn, 100))
     logging.info("Found " + str(len(games_need_reviews)) + " games with < 100 reviews.")
 
     # Get app reviews
     bar = tqdm.tqdm(games_need_reviews, desc = "Getting app reviews", smoothing = 0.0)
-    for game in bar:
-        appid = game["appid"]
+    for appid in bar:
         bar.set_postfix(appid=str(appid))
         known_reviews = set(get_appreviews(conn, appid))
 
