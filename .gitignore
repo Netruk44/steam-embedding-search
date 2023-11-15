@@ -22,3 +22,6 @@
 # SQLite database files
 *.sqlite3
 *.db
+
+# Private files
+.private/
