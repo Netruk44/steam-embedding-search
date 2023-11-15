@@ -98,6 +98,7 @@ def update_description_embeddings(conn, instructor):
 
     # Update embeddings
     logging.info(f"Updating {len(appids_need_updating)} description embeddings")
+    logging.info("NOTE: This only includes game appids, not all appids.")
     for appid in tqdm.tqdm(appids_need_updating, desc = "Updating description embeddings", smoothing = 0.1):
         # Get description
         description = sqlite_helpers.get_input_description_for_appid(conn, appid)
