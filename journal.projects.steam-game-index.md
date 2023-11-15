@@ -12,7 +12,8 @@ Search through steam games in natural language.
 
 ## Outline
 
-Each top-level bullet point is probably a discrete task.
+### Phase 1
+> *Does this work at all?*
 
 * [X] Find API for steam game store
     * Or figure out how to use beautiful soup to scrape the store
@@ -54,7 +55,19 @@ Each top-level bullet point is probably a discrete task.
     * "Represent a video game with the description of: "
     * Evaluate to see if I want to continue with the project
 
+### Phase 2
+> *Make it usable for literally anyone other than me*
 
+**Idea**: Make a web app people can use to search through the dataset.
+
+* [ ] Create an Azure Function / Web App API for
+    * [ ] Generating an embedding for a query
+    * [ ] Querying the database for games that match a given query
+* [ ] Create a web interface for querying the dataset
+    * Is it possible to run database search on client?
+    * [ ] Deploy
+
+### Future
 *Pending*
 * [ ] Create FAISS index for dataset
 * [ ] Create an Azure Function to query the index
