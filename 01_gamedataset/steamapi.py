@@ -48,7 +48,7 @@ def get_app_details(appid):
     if game_details["success"]:
         return game_details["data"]
     else:
-        logging.warning("Failed to get details for appid " + str(appid) + ". Retrying...")
+        logging.debug("Failed to get details for appid " + str(appid) + ". Retrying...")
         raise Exception("Failed to get details for appid " + str(appid))
 
 # Source: https://andrew-muller.medium.com/scraping-steam-user-reviews-9a43f9e38c92
