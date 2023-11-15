@@ -3,3 +3,4 @@ requests
 ratelimit
 tqdm
 tenacity
+click
