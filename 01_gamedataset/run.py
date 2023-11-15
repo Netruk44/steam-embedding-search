@@ -157,6 +157,80 @@ def get_known_appids(conn):
 
     return appids
 
+def get_appids_with_appdetails(conn):
+    '''
+    Returns a list of all appids with app details in the SQLite database.
+
+    Args:
+        conn (sqlite3.Connection): A connection to the SQLite database.
+
+    Returns:
+        list: A list of all appids with app details in the SQLite database.
+    '''
+    logging.debug("Getting all appids with app details from SQLite database")
+
+    c = conn.cursor()
+
+    c.execute('''
+        SELECT appid FROM appdetails
+    ''')
+    appids = [appid[0] for appid in c.fetchall()]
+
+    c.close()
+
+    return appids
+
+def get_appids_with_reviews(conn):
+    '''
+    Returns a list of all appids with reviews in the SQLite database.
+
+    Args:
+        conn (sqlite3.Connection): A connection to the SQLite database.
+
+    Returns:
+        list: A list of all appids with reviews in the SQLite database.
+    '''
+    logging.debug("Getting all appids with reviews from SQLite database")
+
+    c = conn.cursor()
+
+    c.execute('''
+        SELECT DISTINCT appid FROM appreviews
+    ''')
+    appids = [appid[0] for appid in c.fetchall()]
+
+    c.close()
+
+    return appids
+
+def get_appids_with_low_number_of_reviews(conn, min_reviews = 100):
+    '''
+    Returns a list of all appids with less than a certain number of reviews in the SQLite database.
+
+    Args:
+        conn (sqlite3.Connection): A connection to the SQLite database.
+        min_reviews (int): The minimum number of reviews.
+
+    Returns:
+        list: A list of all appids with less than a certain number of reviews in the SQLite database.
+    '''
+    logging.debug("Getting all appids with less than " + str(min_reviews) + " reviews from SQLite database")
+
+    c = conn.cursor()
+
+    c.execute('''
+        SELECT appdetails.appid, count(appreviews.appid) as review_count
+        FROM appdetails
+        LEFT JOIN appreviews ON appdetails.appid = appreviews.appid
+        GROUP BY appdetails.appid
+        HAVING review_count < ?
+    ''', (min_reviews,))
+    appids = [appid[0] for appid in c.fetchall()]
+
+    c.close()
+
+    return appids
+
 def insert_appdetails(conn, appid, appdetails):
     '''
     Inserts a list of games into the SQLite database.
@@ -257,23 +331,28 @@ def main():
         create_tables(conn)
 
     # Update game list
-    gamelist = get_game_list()
+    gamelist = set(get_game_list())
     known_appids = set(get_known_appids(conn))
-    new_gamelist = [game for game in gamelist if game["appid"] not in known_appids]
+    new_gamelist = gamelist - known_appids
     logging.info("Found " + str(len(new_gamelist)) + " new games on Steam.")
     insert_gamelist(conn, new_gamelist)
 
+    # Games without app details
+    games_with_appdetails = set(get_appids_with_appdetails(conn))
+    games_need_appdetails = known_appids - games_with_appdetails
+    logging.info("Found " + str(len(games_need_appdetails)) + " games without app details.")
 
     # Random subset
     limit = None # Do not comment out
     limit = 5000
 
     if limit != None:
-        random.shuffle(gamelist)
-        gamelist = gamelist[:limit]
+        logging.info("Limiting update to " + str(limit) + " games.")
+        random.shuffle(games_need_appdetails)
+        games_need_appdetails = games_need_appdetails[:limit]
     
     # Update app details
-    bar = tqdm.tqdm(gamelist, desc = "Updating app details", smoothing = 0.0)
+    bar = tqdm.tqdm(games_need_appdetails, desc = "Updating app details", smoothing = 0.0)
     for game in bar:
         appid = game["appid"]
         bar.set_postfix(appid=str(appid))
@@ -289,8 +368,12 @@ def main():
         else:
             logging.debug("App details for appid " + str(appid) + " already exist in SQLite database. Skipping...")
 
+    # Games without app reviews
+    games_need_reviews = set(get_appids_with_low_number_of_reviews(conn, 100))
+    logging.info("Found " + str(len(games_need_reviews)) + " games with < 100 reviews.")
+
     # Get app reviews
-    bar = tqdm.tqdm(gamelist, desc = "Getting app reviews", smoothing = 0.0)
+    bar = tqdm.tqdm(games_need_reviews, desc = "Getting app reviews", smoothing = 0.0)
     for game in bar:
         appid = game["appid"]
         bar.set_postfix(appid=str(appid))
