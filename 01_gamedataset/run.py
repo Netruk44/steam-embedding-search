@@ -403,6 +403,7 @@ def main():
         bar.set_postfix(appid=str(appid))
 
         try:
+            known_reviews = get_appreview_recommendationids(conn, appid)
             appreviews = get_n_reviews(appid, n = 100)
             new_appreviews = [review for review in appreviews if int(review["recommendationid"]) not in known_reviews]
             logging.debug("Found " + str(len(new_appreviews)) + " new reviews for appid " + str(appid) + ".")
