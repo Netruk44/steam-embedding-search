@@ -133,7 +133,7 @@ def insert_gamelist(conn, gamelist):
 
     c = conn.cursor()
 
-    for game in tqdm.tqdm(gamelist):
+    for game in gamelist:
         c.execute('''
             INSERT OR IGNORE INTO gamelist (datajson, appid, name)
             VALUES (?, ?, ?)
