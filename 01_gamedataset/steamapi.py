@@ -86,5 +86,5 @@ def get_n_reviews(appid, n=100):
 
         if len(response['reviews']) < 100: break
 
-    logging.info("Found " + str(len(reviews)) + " reviews for appid " + str(appid))
+    logging.debug("Found " + str(len(reviews)) + " reviews for appid " + str(appid))
     return reviews
