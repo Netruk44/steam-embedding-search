@@ -89,12 +89,8 @@ def generate_embeddings_for_contents(
     return all_embeddings
 
 def update_description_embeddings(conn, instructor):
-    # Find app ids that have embeddings already
-    output_appids = sqlite_helpers.get_output_description_appids(conn)
-
-    # Find app ids that need embeddings
-    input_appids = sqlite_helpers.get_input_appids_with_description(conn, only_games=True)
-    appids_need_updating = input_appids - output_appids
+    # Find game app ids that need embeddings
+    appids_need_updating = sqlite_helpers.get_game_appids_without_description_embeddings(conn)
 
     # Update embeddings
     logging.info(f"Updating {len(appids_need_updating)} description embeddings")

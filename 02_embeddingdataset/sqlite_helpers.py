@@ -293,6 +293,34 @@ def insert_review_embeddings(conn: sqlite3.Connection, recommendationid: int, em
     conn.commit()
     c.close()
 
+def get_game_appids_without_description_embeddings(conn: sqlite3.Connection) -> Set[int]:
+    """
+    Gets all appids from the input SQLite database that do not have description embeddings.
+
+    Args:
+        conn (sqlite3.Connection): A connection to the SQLite database.
+
+    Returns:
+        Set[int]: A set of all appids in the input SQLite database that do not have description embeddings.
+    """
+    logging.debug("Getting all appids from input SQLite database that do not have description embeddings")
+
+    c = conn.cursor()
+
+    c.execute('''
+        SELECT appid FROM appdetails 
+        WHERE appid NOT IN (
+            SELECT appid FROM description_embeddings
+        )
+        AND type = 'game'
+    ''')
+
+    appids = [appid[0] for appid in c.fetchall()]
+
+    c.close()
+
+    return set(appids)
+
 def get_recommendationids_without_embeddings(conn):
     """
     Gets all recommendationids from the input SQLite database that do not have embeddings.
