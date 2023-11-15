@@ -173,80 +173,6 @@ def get_known_appids(conn):
 
     return appids
 
-def get_appids_with_appdetails(conn):
-    '''
-    Returns a list of all appids with app details in the SQLite database.
-
-    Args:
-        conn (sqlite3.Connection): A connection to the SQLite database.
-
-    Returns:
-        list: A list of all appids with app details in the SQLite database.
-    '''
-    logging.debug("Getting all appids with app details from SQLite database")
-
-    c = conn.cursor()
-
-    c.execute('''
-        SELECT appid FROM appdetails
-    ''')
-    appids = [appid[0] for appid in c.fetchall()]
-
-    c.close()
-
-    return appids
-
-def get_appids_with_reviews(conn):
-    '''
-    Returns a list of all appids with reviews in the SQLite database.
-
-    Args:
-        conn (sqlite3.Connection): A connection to the SQLite database.
-
-    Returns:
-        list: A list of all appids with reviews in the SQLite database.
-    '''
-    logging.debug("Getting all appids with reviews from SQLite database")
-
-    c = conn.cursor()
-
-    c.execute('''
-        SELECT DISTINCT appid FROM appreviews
-    ''')
-    appids = [appid[0] for appid in c.fetchall()]
-
-    c.close()
-
-    return appids
-
-def get_appids_with_low_number_of_reviews(conn, min_reviews = 100):
-    '''
-    Returns a list of all appids with less than a certain number of reviews in the SQLite database.
-
-    Args:
-        conn (sqlite3.Connection): A connection to the SQLite database.
-        min_reviews (int): The minimum number of reviews.
-
-    Returns:
-        list: A list of all appids with less than a certain number of reviews in the SQLite database.
-    '''
-    logging.debug("Getting all appids with less than " + str(min_reviews) + " reviews from SQLite database")
-
-    c = conn.cursor()
-
-    c.execute('''
-        SELECT appdetails.appid, count(appreviews.appid) as review_count
-        FROM appdetails
-        LEFT JOIN appreviews ON appdetails.appid = appreviews.appid
-        GROUP BY appdetails.appid
-        HAVING review_count < ?
-    ''', (min_reviews,))
-    appids = [appid[0] for appid in c.fetchall()]
-
-    c.close()
-
-    return appids
-
 def insert_appdetails(conn, appid, appdetails):
     '''
     Inserts a list of games into the SQLite database.
@@ -292,30 +218,6 @@ def mark_appdetails_updated(conn, appid):
 
     conn.commit()
     c.close()
-
-def appdetails_exists(conn, appid):
-    '''
-    Checks if the appdetails for a game exist in the SQLite database.
-
-    Args:
-        conn (sqlite3.Connection): A connection to the SQLite database.
-        appid (int): The appid of the game.
-
-    Returns:
-        bool: True if the appdetails exist, False otherwise.
-    '''
-    logging.debug("Checking if appdetails for appid " + str(appid) + " exist in SQLite database")
-
-    c = conn.cursor()
-
-    c.execute('''
-        SELECT count(*) FROM appdetails WHERE appid = ?
-    ''', (appid,))
-    appdetails_exist = c.fetchone()[0] == 1
-
-    c.close()
-
-    return appdetails_exist
 
 def insert_appreviews(conn, appid, appreviews):
     '''
