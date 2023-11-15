@@ -94,6 +94,14 @@ def create_tables(conn):
         CREATE INDEX IF NOT EXISTS appdetails_type_index ON appdetails(type)
     ''')
 
+    # Create table 'lastupdate_appdetails'
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS lastupdate_appdetails (
+            appid INTEGER PRIMARY KEY,
+            lastupdate INTEGER
+        )
+    ''')
+
     # Create table 'appreviews'
     c.execute('''
         CREATE TABLE IF NOT EXISTS appreviews (
@@ -108,6 +116,14 @@ def create_tables(conn):
     # Add index to 'appreviews' for appid
     c.execute('''
         CREATE INDEX IF NOT EXISTS appreviews_appid_index ON appreviews(appid)
+    ''')
+
+    # Create table 'lastupdate_appreviews'
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS lastupdate_appreviews (
+            appid INTEGER PRIMARY KEY,
+            lastupdate INTEGER
+        )
     ''')
 
     conn.commit()
@@ -251,6 +267,32 @@ def insert_appdetails(conn, appid, appdetails):
     conn.commit()
     c.close()
 
+def mark_appdetails_updated(conn, appid):
+    '''
+    Marks the appdetails for a game as updated in the SQLite database.
+
+    Args:
+        conn (sqlite3.Connection): A connection to the SQLite database.
+        appid (int): The appid of the game.
+    '''
+    logging.debug("Marking appdetails for appid " + str(appid) + " as updated in SQLite database")
+
+    c = conn.cursor()
+
+    c.execute('''
+        INSERT OR IGNORE INTO lastupdate_appdetails (appid, lastupdate)
+        VALUES (?, NULL)
+    ''', (appid,))
+
+    c.execute('''
+        UPDATE lastupdate_appdetails
+        SET lastupdate = CAST(strftime('%s', 'now') AS INTEGER)
+        WHERE appid = ?
+    ''', (appid,))
+
+    conn.commit()
+    c.close()
+
 def appdetails_exists(conn, appid):
     '''
     Checks if the appdetails for a game exist in the SQLite database.
@@ -292,12 +334,38 @@ def insert_appreviews(conn, appid, appreviews):
         c.execute('''
             INSERT OR IGNORE INTO appreviews (datajson, recommendationid, appid, review)
             VALUES (?, ?, ?, ?)
-        ''', (json.dumps(review), review["recommendationid"], appid, review["review"]))
+        ''', (json.dumps(review), review["recommendationid"], appid, review["review"]))           
 
     conn.commit()
     c.close()
 
-def get_appreviews(conn, appid):
+def mark_appreviews_updated(conn, appid):
+    '''
+    Marks the appreviews for a game as updated in the SQLite database.
+
+    Args:
+        conn (sqlite3.Connection): A connection to the SQLite database.
+        appid (int): The appid of the game.
+    '''
+    logging.debug("Marking appreviews for appid " + str(appid) + " as updated in SQLite database")
+
+    c = conn.cursor()
+
+    c.execute('''
+        INSERT OR IGNORE INTO lastupdate_appreviews (appid, lastupdate)
+        VALUES (?, NULL)
+    ''', (appid,))
+
+    c.execute('''
+        UPDATE lastupdate_appreviews
+        SET lastupdate = CAST(strftime('%s', 'now') AS INTEGER)
+        WHERE appid = ?
+    ''', (appid,))
+
+    conn.commit()
+    c.close()
+
+def get_appreview_recommendationids(conn, appid):
     '''
     Returns a list of all recommendationids for a game in the SQLite database.
 
@@ -321,6 +389,72 @@ def get_appreviews(conn, appid):
 
     return recommendationids
 
+def get_appdetails_to_update(conn, count=100):
+    '''
+    Returns a list of appids that need updating in the SQLite database.
+
+    Args:
+        conn (sqlite3.Connection): A connection to the SQLite database.
+        count (int): The number of appids to return.
+
+    Returns:
+        list: A list of appids that do not exist in appdetails, ordered by least recently updated.
+    '''
+    logging.debug("Getting " + str(count) + " appids to update from SQLite database")
+
+    c = conn.cursor()
+
+    c.execute('''
+        SELECT gamelist.appid 
+        FROM gamelist
+        LEFT JOIN lastupdate_appdetails ON gamelist.appid = lastupdate_appdetails.appid
+        LEFT JOIN appdetails ON gamelist.appid = appdetails.appid
+        WHERE appdetails.appid IS NULL              -- appdetails do not exist in the DB
+        ORDER BY IFNULL(lastupdate, 0) ASC,         -- order by least recently updated
+                random() ASC                        -- randomize order of appids that have not been updated
+        LIMIT ?
+    ''', (count,))
+    appids = [appid[0] for appid in c.fetchall()]
+
+    c.close()
+
+    return appids
+
+def get_appreviews_to_update(conn, minimum_review_count = 100, output_count=100):
+    '''
+    Returns a list of appids that need updating in the SQLite database.
+
+    Args:
+        conn (sqlite3.Connection): A connection to the SQLite database.
+        count (int): The number of appids to return.
+
+    Returns:
+        list: A list of appids that do not exist in appreviews, ordered by least recently updated.
+    '''
+    logging.debug("Getting " + str(output_count) + " appids to update from SQLite database")
+
+    c = conn.cursor()
+
+    c.execute('''
+        SELECT gamelist.appid 
+        FROM gamelist
+        LEFT JOIN lastupdate_appreviews ON gamelist.appid = lastupdate_appreviews.appid
+        LEFT JOIN (
+            SELECT appid, count(appid) as review_count
+            FROM appreviews
+            GROUP BY appid
+        ) AS review_count ON gamelist.appid = review_count.appid
+        WHERE IFNULL(review_count.review_count, 0) < ?      -- app has less than minimum_review_count reviews
+        ORDER BY IFNULL(lastupdate, 0) ASC,                 -- order by least recently updated
+              random() ASC                                  -- randomize order of appids that have not been updated
+        LIMIT ?
+    ''', (minimum_review_count, output_count))
+    appids = [appid[0] for appid in c.fetchall()]
+
+    c.close()
+
+    return appids
+
 ## Main function
 
 def main():
@@ -337,54 +471,42 @@ def main():
     logging.info("Found " + str(len(new_gamelist)) + " new games on Steam.")
     insert_gamelist(conn, new_gamelist)
 
-    # Update known_appids with new appids
-    known_appids = set(get_known_appids(conn))
-
-    # Games without app details
-    games_with_appdetails = set(get_appids_with_appdetails(conn))
-    games_need_appdetails = list(known_appids - games_with_appdetails)
-    logging.info("Found " + str(len(games_need_appdetails)) + " games without app details.")
-
-    # Random subset
+    # Take subset
     limit = None # Do not comment out
     limit = 5000
 
-    if limit != None:
-        logging.info("Limiting update to " + str(limit) + " games.")
-        random.shuffle(games_need_appdetails)
-        games_need_appdetails = games_need_appdetails[:limit]
+    appids_to_update_details = get_appdetails_to_update(conn, count = limit)
     
     # Update app details
-    bar = tqdm.tqdm(games_need_appdetails, desc = "Updating app details", smoothing = 0.0)
+    bar = tqdm.tqdm(appids_to_update_details, desc = "Updating app details", smoothing = 0.0)
     for appid in bar:
         bar.set_postfix(appid=str(appid))
-        if not appdetails_exists(conn, appid):
-            try:
-                appdetails = get_app_details(appid)
-                insert_appdetails(conn, appid, appdetails)
-            except KeyboardInterrupt:
-                raise
-            except:
-                logging.warning("Failed to get app details for appid " + str(appid) + ". Skipping...")
-                continue
-        else:
-            logging.debug("App details for appid " + str(appid) + " already exist in SQLite database. Skipping...")
+        try:
+            appdetails = get_app_details(appid)
+            insert_appdetails(conn, appid, appdetails)
+        except KeyboardInterrupt:
+            raise
+        except:
+            logging.warning("Failed to get app details for appid " + str(appid) + ". Skipping...")
+            continue
+        finally:
+            mark_appdetails_updated(conn, appid)
 
-    # Games without app reviews
-    games_need_reviews = list(get_appids_with_low_number_of_reviews(conn, 100))
-    logging.info("Found " + str(len(games_need_reviews)) + " games with < 100 reviews.")
 
-    # Get app reviews
-    bar = tqdm.tqdm(games_need_reviews, desc = "Getting app reviews", smoothing = 0.0)
+    # Update app reviews
+    appids_to_update_reviews = get_appreviews_to_update(conn, output_count = limit)
+
+    bar = tqdm.tqdm(appids_to_update_reviews, desc = "Getting app reviews", smoothing = 0.0)
     for appid in bar:
         bar.set_postfix(appid=str(appid))
-        known_reviews = set(get_appreviews(conn, appid))
 
-        if len(known_reviews) < 100:
+        try:
             appreviews = get_n_reviews(appid, n = 100)
             new_appreviews = [review for review in appreviews if int(review["recommendationid"]) not in known_reviews]
-            logging.info("Found " + str(len(new_appreviews)) + " new reviews for appid " + str(appid) + ".")
+            logging.debug("Found " + str(len(new_appreviews)) + " new reviews for appid " + str(appid) + ".")
             insert_appreviews(conn, appid, new_appreviews)
+        finally:
+            mark_appreviews_updated(conn, appid)
 
     conn.close()
 
