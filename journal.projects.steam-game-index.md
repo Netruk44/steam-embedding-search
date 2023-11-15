@@ -12,7 +12,7 @@ Search through steam games in natural language.
 
 ## Outline
 
-### Phase 1
+### Phase 0
 > *Does this work at all?*
 
 * [X] Find API for steam game store
@@ -55,7 +55,7 @@ Search through steam games in natural language.
     * "Represent a video game with the description of: "
     * Evaluate to see if I want to continue with the project
 
-### Phase 2
+### Phase 1
 > *Make it usable for literally anyone other than me*
 
 **Idea**: Make a web app people can use to search through the dataset.
