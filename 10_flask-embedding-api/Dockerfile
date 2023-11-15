@@ -18,7 +18,7 @@ RUN pip install --trusted-host pypi.python.org -r requirements.txt
 EXPOSE 80
 
 # Define environment variable
-#ENV NAME World
+ENV TOKENIZERS_PARALLELISM=false
 
 # Run app.py when the container launches
 CMD ["python3", "-m", "flask", "run", "--host=0.0.0.0", "--port=80"]

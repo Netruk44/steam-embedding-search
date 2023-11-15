@@ -6,6 +6,7 @@ from typing import List
 import logging
 import numpy as np
 import json
+from wsgiref.simple_server import make_server
 
 app = Flask(__name__)
 
@@ -114,4 +115,6 @@ def search(conn, query_embed, query_for_type, max_results=10):
 if __name__ == '__main__':
     print('Loading instructor model...')
     instructor_model = InstructorModel(instructor_model_name)
-    app.run()
+    
+    server = make_server('localhost', 5000, app)
+    server.serve_forever()
