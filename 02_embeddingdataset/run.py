@@ -108,30 +108,18 @@ def update_description_embeddings(conn, instructor):
         sqlite_helpers.insert_description_embeddings(conn, appid, embeddings)
 
 def update_review_embeddings(conn, instructor):
-    # Find recommendation ids that have embeddings already
-    output_recommendationids = sqlite_helpers.get_output_review_recommendationids(conn)
-
-    # Find app ids that need embeddings
-    input_appids = sqlite_helpers.get_input_appids_for_reviews(conn)
+    new_recommendationids = sqlite_helpers.get_recommendationids_without_embeddings(conn)
+    logging.info(f"Updating {len(new_recommendationids)} review embeddings")
 
     # Update reviews
-    bar = tqdm.tqdm(input_appids, desc = "Updating review embeddings", smoothing = 0.1)
-    for input_appid in bar:
-        # Get reviews
-        all_reviews = sqlite_helpers.get_input_reviews_for_appid(conn, input_appid)
-        all_review_recommendationids = set(all_reviews.keys())
-        new_reviews = all_review_recommendationids - output_recommendationids
-
-        # Update embeddings
-        logging.debug(f"Updating {len(new_reviews)} review embeddings for appid {input_appid}")
-        for index, recommendationid in enumerate(new_reviews):
-            bar.set_postfix(appid=str(input_appid), progress=int(index / len(new_reviews) * 100))
-            # Get review
-            review = all_reviews[recommendationid]
-            # Generate embeddings
-            embeddings = generate_embeddings_for_contents(review, instructor)
-            # Insert embeddings
-            sqlite_helpers.insert_review_embeddings(conn, recommendationid, embeddings)
+    bar = tqdm.tqdm(new_recommendationids, desc = "Updating review embeddings", smoothing = 0.1)
+    for recommendationid in bar:
+        # Get review
+        review = sqlite_helpers.get_review_for_recommendationid(conn, recommendationid)
+        # Generate embeddings
+        embeddings = generate_embeddings_for_contents(review, instructor)
+        # Insert embeddings
+        sqlite_helpers.insert_review_embeddings(conn, recommendationid, embeddings)
 
 if __name__ == '__main__':
     main()

@@ -292,3 +292,53 @@ def insert_review_embeddings(conn: sqlite3.Connection, recommendationid: int, em
 
     conn.commit()
     c.close()
+
+def get_recommendationids_without_embeddings(conn):
+    """
+    Gets all recommendationids from the input SQLite database that do not have embeddings.
+
+    Args:
+        conn (sqlite3.Connection): A connection to the SQLite database.
+
+    Returns:
+        List[int]: A list of all recommendationids in the input SQLite database that do not have embeddings.
+    """
+    logging.debug("Getting all recommendationids from input SQLite database that do not have embeddings")
+
+    c = conn.cursor()
+
+    c.execute('''
+        SELECT recommendationid FROM appreviews WHERE recommendationid NOT IN (
+            SELECT recommendationid FROM review_embeddings
+        )
+    ''')
+
+    recommendationids = [recommendationid[0] for recommendationid in c.fetchall()]
+
+    c.close()
+
+    return recommendationids
+
+def get_review_for_recommendationid(conn: sqlite3.Connection, recommendationid: int) -> str:
+    """
+    Gets the review for the given recommendationid from the input SQLite database.
+
+    Args:
+        conn (sqlite3.Connection): A connection to the SQLite database.
+        recommendationid (int): The recommendationid to get the review for.
+
+    Returns:
+        str: The review for the given recommendationid from the input SQLite database.
+    """
+    logging.debug(f"Getting review for recommendationid {recommendationid} from input SQLite database")
+
+    c = conn.cursor()
+
+    c.execute('''
+        SELECT review FROM appreviews WHERE recommendationid = ?
+    ''', (recommendationid,))
+    review = c.fetchone()[0]
+
+    c.close()
+
+    return review
