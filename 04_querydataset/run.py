@@ -48,7 +48,7 @@ def main(db, query, index, query_for_type, embed_query, model_name, verbose):
 
     # Get query embedding
     query_tokenized = instructor.tokenize(query)
-    if len(query) > instructor.get_max_query_chunk_length():
+    if len(query_tokenized) > instructor.get_max_query_chunk_length():
         logging.error(f"Query is too long. {len(query_tokenized)} / {instructor.get_max_query_chunk_length()} tokens are used.")
         exit(1)
 
@@ -127,7 +127,7 @@ def slow_search(conn, query_embed, query_for_type, max_results=10):
 
     # Review search v2 - Calculate average embedding for all reviews
     if query_for_type == 'all' or query_for_type == 'review':
-        appids_with_reviews = sqlite_helpers.get_review_appids(conn)
+        appids_with_reviews = sqlite_helpers.get_appids_with_review_embeds(conn)
 
         for appid in tqdm.tqdm(appids_with_reviews, desc="Reviews"):
             all_review_embeddings = sqlite_helpers.get_review_embeddings_for_appid(conn, appid)
