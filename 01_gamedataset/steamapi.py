@@ -25,7 +25,7 @@ def get_game_list():
     url = "https://api.steampowered.com/ISteamApps/GetAppList/v2/"
     response = call_api(url, params = {"format": "json"})
     app_list = response["applist"]["apps"]
-    logging.info("Found " + str(len(app_list)) + " games on in steam app list.")
+    logging.info("Found " + str(len(app_list)) + " games in steam app list.")
     return app_list
 
 
