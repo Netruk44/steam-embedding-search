@@ -15,6 +15,7 @@ app = Flask(__name__)
 
 # Startup code
 with app.app_context():
+    logging.basicConfig(level=logging.INFO)
     print('Loading instructor model...')
     instructor_model = InstructorModel(instructor_model_name)
 
@@ -38,12 +39,15 @@ def get_results():
     num_results = 10 if num_results is None else int(num_results)
     num_results = max(0, min(num_results, 100))
 
+    logging.info(f'Request: {request.url}')
+
     # Generate query embedding
     query_tokenized = instructor_model.tokenize(query)
+    instructor_model.embedding_instruction = instruction
+
     if len(query_tokenized) > instructor_model.get_max_query_chunk_length():
         return 'Query too long, shorten query or instruction', 400
     
-    instructor_model.embedding_instruction = instruction
     query_embed = instructor_model.generate_embedding_for_query(query)
 
     # Query for results
