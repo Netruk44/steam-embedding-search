@@ -60,7 +60,7 @@ Search through steam games in natural language.
 
 **Idea**: Make a web app people can use to search through the dataset.
 
-* []X Create an Azure Function / Web App API for
+* [X] Create an Azure Function / Web App API for
     * [ ] ~~Generating an embedding for a query~~
     * [X] Querying the database for games that match a given query
 * [X] Create a web interface for querying the dataset
