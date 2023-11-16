@@ -33,12 +33,14 @@ Describe the kind of game you're looking for, and get a list of games that close
 ### 01_gamedataset
 - **Requirements**: A web connection, time (~6 hours)
 - **Overview**: Queries the Steam API to populate the database with steam app ids, game names, store descriptions, and top 100 reviews (decided by Steam).
+- Use `--new` to create a new database.
 - Rate limited to 1 request per 1.5 seconds, to meet Valve's rate limiting policy.
-- Currently only populates a randomly selected 5,000 app ids with store descriptions and reviews per run.
-    - Populating the database with all 180k app ids and their reviews would take about a week.
-- Running this script once takes about 6 hours to complete.
+- Currently only populates randomly selected app ids with store descriptions and reviews per run.
+    - Controllable with `--limit <number>` (default 5,000)
+    - Populating the database with all 180k app ids and their reviews will take about a week.
+- Takes about 2 hours for 1,000 app ids, 6-10 hours for 5,000 app ids.
 - Re-running the script with the same database will add more app ids to the database.
-- Example invocation: `python run.py`
+- Example invocation: `python run.py --db ./steam.db --limit 1000`
 
 ### 02_embeddings
 - **Requirements**: A CUDA GPU (highly recommended), or without that, time (a couple hours)
@@ -55,7 +57,7 @@ Describe the kind of game you're looking for, and get a list of games that close
 - Not yet implemented.
 
 ### 04_querydataset
-- **Requirements**: 3-6 GB of CPU RAM.
+- **Requirements**: Fairly low. A CPU with 3-6 GB of RAM.
 - **Overview**: Queries the database for games that match a given query.
 - Takes about 10 seconds to complete and return results.
     - Most of the time spent in this script is loading Instructor to generate an embedding for your query.
@@ -64,7 +66,7 @@ Describe the kind of game you're looking for, and get a list of games that close
 - Example invocation: `python run.py --db ./steam.db --query "I want a game that is like a mix of Minecraft and Skyrim"`
 
 ### 10_flask-embedding-api
-- **Requirements**: Fairly low. A CPU with 2 GB of RAM should be fine.
+- **Requirements**:  Same as 04
 - **Overview**: A Flask API that can be used to query the database.
 - **Important**: Not very configurable at the current moment. Has hardcoded assumptions about the database and model.
 - Includes Dockerfile and docker-compose.yml for easy deployment.
