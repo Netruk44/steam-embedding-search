@@ -76,7 +76,7 @@ Describe the kind of game you're looking for, and get a list of games that close
 - **Overview**: A simple React interface for querying the API.
 - **Important**: Not very configurable at the current moment. API is hardcoded to my home computer.
 - Use `npm run build` to build the static files (available in `./build`).
-- Use `npm run start` to start a development server.
+- Use `npm start` to start a development server.
 
 ## Example Results
 
