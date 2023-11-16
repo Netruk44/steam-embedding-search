@@ -10,7 +10,7 @@ function App() {
     event.preventDefault();
     setIsSearching(true);
 
-    fetch(`http://home.danieltperry.me:5000/get_results?query=${encodeURIComponent(searchTerm)}`)
+    fetch(`https://steamvibe-api.azurewebsites.net/get_results?query=${encodeURIComponent(searchTerm)}`)
       .then(response => response.json())
       .then(data => setSearchResults(data))
       .catch(error => console.error('Error:', error))
