@@ -313,6 +313,7 @@ def get_game_appids_without_description_embeddings(conn: sqlite3.Connection) -> 
             SELECT appid FROM description_embeddings
         )
         AND type = 'game'
+        AND required_age < 18
     ''')
 
     appids = [appid[0] for appid in c.fetchall()]
@@ -336,9 +337,12 @@ def get_recommendationids_without_embeddings(conn):
     c = conn.cursor()
 
     c.execute('''
-        SELECT recommendationid FROM appreviews WHERE recommendationid NOT IN (
+        SELECT recommendationid FROM appreviews
+        JOIN appdetails USING (appid)
+        WHERE recommendationid NOT IN (
             SELECT recommendationid FROM review_embeddings
-        )
+        ) AND type = 'game'
+        AND required_age < 18
     ''')
 
     recommendationids = [recommendationid[0] for recommendationid in c.fetchall()]
