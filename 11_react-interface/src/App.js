@@ -25,7 +25,7 @@ function App() {
         </div>
         <p>Describe the kind of game you're looking for, see what you get!</p>
         <p><i>e.g. "An open world exploration-based game featuring resource gathering."</i></p>
-        <p><strong>Tip:</strong> Try being descriptive. Describe an imaginary game. What is it about? What do you do? What's the ✨vibe✨?</p>
+        <p><strong>Tip:</strong> Try being descriptive. Describe an imaginary game. What is it about? What do you do? What's the ✨vibe✨? Longer descriptions tend to get better results.</p>
         <p><i>Disclaimer:</i> The search database is not yet fully populated. Only a randomly selected ~15k games can be found here.</p>
         <form onSubmit={handleSearch}>
           <label htmlFor="search">Description:</label> 
