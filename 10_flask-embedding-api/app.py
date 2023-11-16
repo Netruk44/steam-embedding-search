@@ -7,12 +7,17 @@ import logging
 import numpy as np
 import json
 from wsgiref.simple_server import make_server
+from config import database_path, instructor_model_name
+
+instructor_model = None
 
 app = Flask(__name__)
 
-instructor_model = None
-database_path = 'steam_instructor-xl.db'
-instructor_model_name = 'hkunlp/instructor-xl'
+# Startup code
+with app.app_context():
+    print('Loading instructor model...')
+    instructor_model = InstructorModel(instructor_model_name)
+
 
 @app.route('/get_results')
 def get_results():
@@ -112,9 +117,7 @@ def search(conn, query_embed, query_for_type, max_results=10):
 
     return matches
 
+
 if __name__ == '__main__':
-    print('Loading instructor model...')
-    instructor_model = InstructorModel(instructor_model_name)
-    
     server = make_server('localhost', 5000, app)
     server.serve_forever()
