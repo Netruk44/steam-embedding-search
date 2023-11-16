@@ -8,11 +8,11 @@ WORKDIR /app
 # Copy the current directory contents into the container at /app
 COPY . /app
 
-# Copy sqlite database from parent directory into the container at /app
-COPY ../steam_instructor-xl.db /app/steam_instructor-xl.db
-
 # Install any needed packages specified in requirements.txt
 RUN pip install --trusted-host pypi.python.org -r requirements.txt
+
+# Run prepare script
+RUN python3 prepare.py
 
 # Make port 5000 available to the world outside this container
 EXPOSE 5000
