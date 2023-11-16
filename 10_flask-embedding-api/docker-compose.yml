@@ -3,7 +3,7 @@ version: "3.8"
 
 services:
   steamvibe-api:
-    image: steamvibe-api:v0.1_x64
+    image: steamvibes-api:v0.1_x64
     ports:
       - 5000:5000
     environment:
