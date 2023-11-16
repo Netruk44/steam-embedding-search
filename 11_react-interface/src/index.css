@@ -64,7 +64,16 @@ tr:nth-child(even) {
 tr:nth-child(odd) {
   background-color: #ddd;
 }
+
 table td:nth-child(5) {
   font-size: 2rem;
   font-weight: bolder;
+}
+
+.source {
+  margin-bottom: 1rem;
+}
+
+.source img {
+  vertical-align: middle;
 }

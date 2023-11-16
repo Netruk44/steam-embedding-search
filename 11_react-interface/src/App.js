@@ -20,6 +20,9 @@ function App() {
     return (
       <div>
         <h1>Text-Based Steam Search</h1>
+        <div class="source">
+        <img src={process.env.PUBLIC_URL + "/GitHub-logo.png"} style={{ maxWidth: '24px', height: 'auto' }} /><strong>Source:</strong><a href="https://github.com/Netruk44/steam-text-search">Netruk44/steam-text-search</a>
+        </div>
         <p>Describe the kind of game you're looking for, see what you get!</p>
         <p>e.g. <i>"An open world exploration-based game featuring resource gathering."</i></p>
         <p><strong>Tip:</strong> Try being descriptive. Describe an imaginary game. What is it about? What do you do? What's the ✨vibe✨?</p>
