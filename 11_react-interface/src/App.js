@@ -31,6 +31,7 @@ function App() {
           <label htmlFor="search">Description:</label> 
           <input type="text" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} />
           <button type="submit" disabled={isSearching}>{isSearching ? 'Searching...' : 'Search'}</button><br />
+          <button type="button" class='btn-clear' onClick={() => setSearchTerm('')}>Clear</button>
         </form>
       <hr />
       <h2>Results</h2>

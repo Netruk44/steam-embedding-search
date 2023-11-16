@@ -27,6 +27,12 @@ button {
   cursor: pointer;
 }
 
+.btn-clear {
+  background-color: #fff;
+  color: #333;
+  font-weight: normal;
+}
+
 button:disabled {
   background-color: #ddd;
   color: #333;
