@@ -20,10 +20,13 @@ COPY prepare.py /app
 RUN python3 prepare.py
 
 # Copy database file
-COPY steam_instructor-xl.db /app
+# COPY steam_instructor-xl.db /app
+
+# Download database file
+RUN python -m wget -o /app/steam_instructor-xl.db http://netrukpub.z5.web.core.windows.net/steamvibes/steam_instructor-xl.db
 
 # Copy all the other python scripts into the container at /app
-COPY *.py /app
+COPY *.py /app/
 
 # Make port 5000 available to the world outside this container
 EXPOSE 5000
