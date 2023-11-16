@@ -63,6 +63,21 @@ Describe the kind of game you're looking for, and get a list of games that close
 - You can use `--query-for-type <type>` to limit search to `all`, `description` or `review` embeddings.
 - Example invocation: `python run.py --db ./steam.db --query "I want a game that is like a mix of Minecraft and Skyrim"`
 
+### 10_flask-embedding-api
+- **Requirements**: Fairly low. A CPU with 2 GB of RAM should be fine.
+- **Overview**: A Flask API that can be used to query the database.
+- **Important**: Not very configurable at the current moment. Has hardcoded assumptions about the database and model.
+- Includes Dockerfile and docker-compose.yml for easy deployment.
+- Can also be executed with `gunicorn` or `flask run`.
+- Example invocation: `python run.py`
+
+### 11_react-interface
+- **Requirements**: Static file hosting.
+- **Overview**: A simple React interface for querying the API.
+- **Important**: Not very configurable at the current moment. API is hardcoded to my home computer.
+- Use `npm run build` to build the static files (available in `./build`).
+- Use `npm run start` to start a development server.
+
 ## Example Results
 
 > **Note**: These results are from a small testing dataset of 5,000 games. The results should be better with a larger dataset.
