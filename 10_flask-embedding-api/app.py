@@ -52,7 +52,15 @@ def get_results():
     conn.close()
 
     # Return results as JSON
-    return json.dumps(results)
+    response = app.response_class(
+        response=json.dumps(results),
+        status=200,
+        mimetype='application/json'
+    )
+
+    response.headers['Access-Control-Allow-Origin'] = '*'
+
+    return response
 
 
 
