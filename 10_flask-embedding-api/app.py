@@ -58,6 +58,7 @@ def get_results():
         mimetype='application/json'
     )
 
+    # TODO: Limit this to the domain of the frontend
     response.headers['Access-Control-Allow-Origin'] = '*'
 
     return response
