@@ -4,27 +4,34 @@ import React, { useState } from 'react';
 function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   const handleSearch = (event) => {
     event.preventDefault();
+    setIsSearching(true);
 
     fetch(`http://home.danieltperry.me:5000/get_results?query=${encodeURIComponent(searchTerm)}`)
       .then(response => response.json())
       .then(data => setSearchResults(data))
-      .catch(error => console.error('Error:', error));
+      .catch(error => console.error('Error:', error))
+      .finally(() => setIsSearching(false));
   };
 
-  return (
-    <div>
-      <h1>Steam ✨Vibe✨ Search</h1>
-      <p>Describe the kind of game you're looking for, see what you get!</p>
-      <form onSubmit={handleSearch}>
-        <label htmlFor="search">Search:</label>
-        <input type="text" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} />
-        <button type="submit">Search</button>
-      </form>
+    return (
+      <div>
+        <h1>Text-Based Steam Search</h1>
+        <p>Describe the kind of game you're looking for, see what you get!</p>
+        <p>e.g. <i>"An open world exploration-based game featuring resource gathering."</i></p>
+        <p><strong>Tip:</strong> Try being descriptive. Describe an imaginary game. What is it about? What do you do? What's the ✨vibe✨?</p>
+        <form onSubmit={handleSearch}>
+          <label htmlFor="search">Description:</label> 
+          <input type="text" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} />
+          <button type="submit" disabled={isSearching}>{isSearching ? 'Searching...' : 'Search'}</button><br />
+        </form>
       <hr />
       <h2>Results</h2>
+      <p><strong>Note:</strong> Scores below 80% are usually not great matches.</p>
+      <p><strong>Note for the note:</strong> Scores above 80% do not guarantee a good match either 😊.</p>
       <table>
         <thead>
           <tr>
@@ -42,8 +49,8 @@ function App() {
               <td><img src={`https://cdn.akamai.steamstatic.com/steam/apps/${result.appid}/header.jpg`} style={{ maxWidth: '240px', height: 'auto' }} /></td>
               <td><a href={`https://store.steampowered.com/app/${result.appid}`}>{result.name}</a></td>
               <td>{result.match_type}</td>
-              <td>{result.score}</td>
-            </tr>
+                <td>{(result.score * 100).toFixed(2)}%</td>
+              </tr>
           ))}
         </tbody>
       </table>
