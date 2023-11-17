@@ -8,6 +8,8 @@ import numpy as np
 import json
 from wsgiref.simple_server import make_server
 from config import database_path, instructor_model_name
+import heapq
+import random
 
 instructor_model = None
 
@@ -76,13 +78,14 @@ def compare_all_embeddings_take_max(embeddings: List[List[float]], query_embed: 
     similarities = [cosine_similarity(embedding, query_embed) for embedding in embeddings]
     return max(similarities)
 
-def add_to_capped_list(list_to_add_to: List[dict], item_to_add: dict, max_length: int):
-    list_to_add_to.append(item_to_add)
-    if len(list_to_add_to) > max_length:
-        # Find the lowest score, remove it
-        lowest_score = min(list_to_add_to, key=lambda x: x['score'])
-        list_to_add_to.remove(lowest_score)
+def add_to_heap(heap: List[dict], item_to_add: dict, max_length: int):
+    # Add to heap
+    # Add a random number to the tuple to break ties, since you can't compare dicts
+    heapq.heappush(heap, (item_to_add['score'], random.random() , item_to_add))
 
+    # Pop if too large
+    if len(heap) > max_length:
+        heapq.heappop(heap)
 
 
 def search(conn, query_embed, query_for_type, max_results=10):
@@ -96,7 +99,7 @@ def search(conn, query_embed, query_for_type, max_results=10):
                 score = compare_all_embeddings_take_max(embeddings, query_embed)
                 name = sqlite_helpers.get_name_for_appid(conn, appid)
 
-                add_to_capped_list(matches, {
+                add_to_heap(matches, {
                     'appid': appid,
                     'name': name,
                     'match_type': 'description',
@@ -118,15 +121,18 @@ def search(conn, query_embed, query_for_type, max_results=10):
             score = cosine_similarity(average_embedding, query_embed)
             name = sqlite_helpers.get_name_for_appid(conn, appid)
 
-            add_to_capped_list(matches, {
+            add_to_heap(matches, {
                 'appid': appid,
                 'name': name,
                 'match_type': 'review',
                 'score': float(score),
             }, max_results)
     
-    # Sort by score
-    matches.sort(key=lambda x: x['score'], reverse=True)
+    # Sort by score (first element of tuple)
+    matches.sort(key=lambda x: x[0], reverse=True)
+
+    # Remove scores and random numbers
+    matches = [match[2] for match in matches]
 
     return matches
 
