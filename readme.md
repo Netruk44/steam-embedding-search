@@ -3,7 +3,7 @@
 See the react interface live [here](https://netrukpub.z5.web.core.windows.net/steamvibes/build/index.html) (for as long as I keep the API running on my home computer).
 
 ## Description
-Search for Steam games based off ✨vibe✨
+Search for Steam games based off a text description.
 
 Describe the kind of game you're looking for, and get a list of games that closest match the vibe you're looking for based off the store description and reviews.
 
