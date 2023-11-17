@@ -7,12 +7,26 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-input {
+input[type='text'] {
   padding: 0.5rem;
   border: 1px solid #ddd;
   border-radius: 0.25rem;
   margin-bottom: 1rem;
-  width: 100%;
+  width: 90%;
+}
+
+input[type='number'] {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+div.advanced-section {
+  background-color: #ddd;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  outline: 1px solid #333;
 }
 
 button {
@@ -31,6 +45,12 @@ button {
   background-color: #fff;
   color: #333;
   font-weight: normal;
+}
+
+.btn-advanced {
+  background-color: #333;
+  color: #fff;
+  font-weight: bolder;
 }
 
 button:disabled {
