@@ -74,8 +74,15 @@ def main(db, new, limit, update_all, update_type, verbose):
         appids_to_update_reviews = sqlite_helpers.get_appreviews_to_update(conn, output_count = limit)
 
         bar = tqdm.tqdm(appids_to_update_reviews, desc = "Getting app reviews", smoothing = 0.0)
+        last_appid = None
+        last_appreviews_count = None
+
         for appid in bar:
-            bar.set_postfix(appid=str(appid))
+            if last_appid is not None:
+                bar.set_postfix(appid=str(last_appid), reviews=str(last_appreviews_count))
+            
+            last_appid = appid
+            last_appreviews_count = None
 
             try:
                 known_reviews = sqlite_helpers.get_appreview_recommendationids(conn, appid)
@@ -83,8 +90,12 @@ def main(db, new, limit, update_all, update_type, verbose):
                 new_appreviews = [review for review in appreviews if int(review["recommendationid"]) not in known_reviews]
                 logging.debug("Found " + str(len(new_appreviews)) + " new reviews for appid " + str(appid) + ".")
                 sqlite_helpers.insert_appreviews(conn, appid, new_appreviews)
+                last_appreviews_count = len(new_appreviews)
             finally:
                 sqlite_helpers.mark_appreviews_updated(conn, appid)
+
+                if last_appreviews_count is None:
+                    last_appreviews_count = 'Failed'
 
     conn.close()
 
