@@ -32,7 +32,7 @@ function App() {
       <p><strong>Tips:</strong></p>
       <ul>
         <li>Longer descriptions tend to get better results.</li>
-        <li>Short descriptions like "amazing visuals" and "farming sim" tend to perform poorly.</li>
+        <li>Short descriptions like "amazing visuals" and "farming sim" tend to return bad results.</li>
         <li>You can use up to ~400 words for your description.</li>
         <li>Describe an imaginary game. What is it about? What do you do? What's the ✨vibe✨? What would people enjoy about it?</li>
       </ul>
