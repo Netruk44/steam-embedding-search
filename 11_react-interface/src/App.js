@@ -29,8 +29,14 @@ function App() {
       </div>
       <p>Describe the kind of game you're looking for, see what you get!</p>
       <p><i>e.g. "An open world exploration-based game featuring resource gathering."</i></p>
-      <p><strong>Tip:</strong> Try being descriptive. Describe an imaginary game. What is it about? What do you do? What's the ✨vibe✨? Longer descriptions tend to get better results.</p>
-      <p><i>Disclaimer:</i> The search database is not yet fully populated. Only a randomly selected ~15k games can be found here.</p>
+      <p><strong>Tips:</strong></p>
+      <ul>
+        <li>Longer descriptions tend to get better results.</li>
+        <li>Short descriptions like "amazing visuals" and "farming sim" tend to perform poorly.</li>
+        <li>You can use up to ~400 words for your description.</li>
+        <li>Describe an imaginary game. What is it about? What do you do? What's the ✨vibe✨? What would people enjoy about it?</li>
+      </ul>
+      <p><i>Note:</i> The search database is not yet fully populated. Only a randomly selected ~15k games can be found here.</p>
       <form onSubmit={handleSearch}>
         <label htmlFor="search">Description:</label>
         <input type="text" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} />
@@ -52,6 +58,7 @@ function App() {
           </div>
         )}
       </form>
+      <p><em>The first search may take up to about 15 seconds. Searches after that should take &lt;5 seconds.</em></p>
       <hr />
       <h2>Results</h2>
       <p><strong>Note:</strong> Scores below 80% are usually not great matches.</p>
