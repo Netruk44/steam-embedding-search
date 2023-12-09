@@ -23,7 +23,7 @@ function App() {
 
   return (
     <div>
-      <h1>Text-Based Steam Search</h1>
+      <h1>Embedding-Based Steam Search</h1>
       <div class="source">
         <img src={process.env.PUBLIC_URL + "/GitHub-logo.png"} style={{ maxWidth: '24px', height: 'auto' }} /><strong>Source:</strong><a href="https://github.com/Netruk44/steam-text-search">Netruk44/steam-text-search</a>
       </div>
@@ -40,11 +40,9 @@ function App() {
       <form onSubmit={handleSearch}>
         <label htmlFor="search">Description:</label>
         <input type="text" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} />
-        <button type="submit" disabled={isSearching}>{isSearching ? 'Searching...' : 'Search'}</button>
-        <button type="button" class='btn-clear' onClick={() => setSearchTerm('')}>Clear</button><br />
-        <button type="button" class='btn-advanced' onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}>Advanced</button>
         {isAdvancedOpen && (
           <div class="advanced-section">
+            <h3>Advanced Options</h3>
             <label htmlFor="instruction">Instruction:</label>
             <input type="text" value={instruction} onChange={(event) => setInstruction(event.target.value)} placeholder="Represent a video game that has a description of:" />
             <label htmlFor="numResults">Number of Results:</label>
@@ -57,34 +55,30 @@ function App() {
             </select>
           </div>
         )}
+        <button type="submit" disabled={isSearching}>{isSearching ? 'Searching...' : 'Search'}</button>
+        <button type="button" class='btn-clear' onClick={() => setSearchTerm('')}>Clear</button>
+        <button type="button" class='btn-advanced' onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}>
+          {isAdvancedOpen ? 'Hide Advanced' : 'Open Advanced'}
+        </button>
       </form>
       <p><em>The first search may take up to about 15 seconds. Searches after that should take &lt;5 seconds.</em></p>
       <hr />
       <h2>Results</h2>
       <p><strong>Note:</strong> Scores below 80% are usually not great matches.</p>
       <p><strong>Note for the note:</strong> Scores above 80% do not guarantee a good match either 😊.</p>
-      <table>
-        <thead>
-          <tr>
-            <th>App ID</th>
-            <th>Icon</th>
-            <th>Name</th>
-            <th>Match Type</th>
-            <th>Score</th>
-          </tr>
-        </thead>
-        <tbody>
-          {searchResults.map((result, index) => (
-            <tr key={index}>
-              <td>{result.appid}</td>
-              <td><img src={`https://cdn.akamai.steamstatic.com/steam/apps/${result.appid}/header.jpg`} style={{ maxWidth: '240px', height: 'auto' }} /></td>
-              <td><a href={`https://store.steampowered.com/app/${result.appid}`}>{result.name}</a></td>
-              <td>{result.match_type}</td>
-              <td>{(result.score * 100).toFixed(2)}%</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="results-container">
+        {searchResults.map((result, index) => (
+          <a key={index} href={`https://store.steampowered.com/app/${result.appid}`} className="results-card">
+            <img src={`https://cdn.akamai.steamstatic.com/steam/apps/${result.appid}/header.jpg`} style={{ maxWidth: '240px', height: 'auto' }} />
+            <div>
+              <h3>{result.name}</h3>
+              <span>App ID:</span> {result.appid}<br />
+              <span>Match Type:</span> {result.match_type}<br />
+              <span>Score:</span> <span className="score">{(result.score * 100).toFixed(2)}%</span>
+            </div>
+          </a>
+        ))}
+      </div>
     </div>
   );
 }
