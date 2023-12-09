@@ -31,15 +31,14 @@ function App() {
       <p><i>e.g. "An open world exploration-based game featuring resource gathering."</i></p>
       <p><strong>Tips:</strong></p>
       <ul>
-        <li>Longer descriptions tend to get better results.</li>
-        <li>Short descriptions like "amazing visuals" and "farming sim" tend to return bad results.</li>
-        <li>You can use up to ~400 words for your description.</li>
-        <li>Describe an imaginary game. What is it about? What do you do? What's the ✨vibe✨? What would people enjoy about it?</li>
+        <li>Longer descriptions tend to get better results. Short descriptions like "amazing visuals" and "farming sim" tend to return bad results.</li>
+        <li>The limit is around 400 words for your description.</li>
+        <li>Try describing an imaginary game. What is it about? What do you do? What's the ✨vibe✨? What would people enjoy about it?</li>
       </ul>
       <p><i>Note:</i> The search database is not yet fully populated. Only a randomly selected ~15k games can be found here.</p>
       <form onSubmit={handleSearch}>
         <label htmlFor="search">Description:</label>
-        <input type="text" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} />
+        <input type="text" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} /><br />
         {isAdvancedOpen && (
           <div class="advanced-section">
             <h3>Advanced Options</h3>
