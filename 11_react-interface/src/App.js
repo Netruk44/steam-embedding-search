@@ -67,7 +67,7 @@ function App() {
       <p><strong>Note for the note:</strong> Scores above 80% do not guarantee a good match either 😊.</p>
       <div className="results-container">
         {searchResults.map((result, index) => (
-          <a key={index} href={`https://store.steampowered.com/app/${result.appid}`} className="results-card">
+          <a key={index} href={`https://store.steampowered.com/app/${result.appid}`} className="results-card" target="_blank" >
             <img src={`https://cdn.akamai.steamstatic.com/steam/apps/${result.appid}/header.jpg`} style={{ maxWidth: '240px', height: 'auto' }} />
             <div>
               <h3>{result.name}</h3>
