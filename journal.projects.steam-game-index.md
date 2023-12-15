@@ -75,3 +75,7 @@ Search through steam games in natural language.
     * [ ] Post to some website
 * [ ] Similar games
     * Given a game, use embeddings and compare to other games to find most similar
+* [ ] Specify distance algorithm
+    * Cosine similarity
+    * Euclidean distance
+    * Dot product
