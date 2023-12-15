@@ -90,8 +90,13 @@ def main(db, query, index, query_for_type, embed_query, model_name, verbose):
 def cosine_similarity(a: List[float], b: List[float]) -> float:
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
+def euclidean_distance(a: List[float], b: List[float]) -> float:
+    distance = np.linalg.norm(a - b)
+    return 1.0 / (1.0 + distance)
+
 def compare_all_embeddings_take_max(embeddings: List[List[float]], query_embed: List[float]) -> float:
     similarities = [cosine_similarity(embedding, query_embed) for embedding in embeddings]
+    #similarities = [euclidean_distance(embedding, query_embed) for embedding in embeddings]
     return max(similarities)
 
 def add_to_capped_list(list_to_add_to: List[dict], item_to_add: dict, max_length: int):
@@ -138,6 +143,7 @@ def slow_search(conn, query_embed, query_for_type, max_results=10):
             
             average_embedding = np.sum(flat_embeddings, axis=0) / len(flat_embeddings)
             score = cosine_similarity(average_embedding, query_embed)
+            #score = euclidean_distance(average_embedding, query_embed)
             name = sqlite_helpers.get_name_for_appid(conn, appid)
 
             add_to_capped_list(matches, {
