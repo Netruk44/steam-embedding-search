@@ -23,7 +23,8 @@ with app.app_context():
 
 
 @app.route('/get_results')
-def get_results():
+@app.route('/get_query_results')
+def get_query_results():
     global instructor_model
 
     query = request.args.get('query')
@@ -70,9 +71,40 @@ def get_results():
     return response
 
 
+@app.route('/get_similar_games')
+def get_similar_games():
+    global instructor_model
+
+    appid = int(request.args.get('appid'))
+    num_results = request.args.get('num_results')
+    num_results = 10 if num_results is None else int(num_results)
+    num_results = max(0, min(num_results, 100))
+
+    logging.info(f'Request: {request.url}')
+
+    # Query for results
+    conn = sqlite_helpers.create_connection(database_path)
+    
+    results = search_similar(conn, appid, 'all', max_results=num_results)
+
+    conn.close()
+
+    # Return results as JSON
+    response = app.response_class(
+        response=json.dumps(results),
+        status=200,
+        mimetype='application/json'
+    )
+
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    return response
+
 
 def cosine_similarity(a: List[float], b: List[float]) -> float:
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+def mean_pooling(embeddings: List[List[float]]) -> List[float]:
+    return np.sum(embeddings, axis=0) / len(embeddings)
 
 def compare_all_embeddings_take_max(embeddings: List[List[float]], query_embed: List[float]) -> float:
     similarities = [cosine_similarity(embedding, query_embed) for embedding in embeddings]
@@ -112,12 +144,9 @@ def search(conn, query_embed, query_for_type, max_results=10):
 
         for appid in appids_with_reviews:
             all_review_embeddings = sqlite_helpers.get_review_embeddings_for_appid(conn, appid)
-            flat_embeddings = []
+            flat_embeddings = [review_embedding for review_id in all_review_embeddings for review_embedding in all_review_embeddings[review_id]]
+            average_embedding = mean_pooling(flat_embeddings)
 
-            for review_id in all_review_embeddings:
-                flat_embeddings.extend(all_review_embeddings[review_id])
-            
-            average_embedding = np.sum(flat_embeddings, axis=0) / len(flat_embeddings)
             score = cosine_similarity(average_embedding, query_embed)
             name = sqlite_helpers.get_name_for_appid(conn, appid)
 
@@ -136,7 +165,65 @@ def search(conn, query_embed, query_for_type, max_results=10):
 
     return matches
 
+def search_similar(conn, query_appid, query_for_type, max_results=10):
+    matches = []
+    logging.debug(f"Searching for similar games to {sqlite_helpers.get_name_for_appid(conn, query_appid)}")
+
+    # Store Description Search
+    if query_for_type == 'all' or query_for_type == 'description':
+        all_description_embeddings = sqlite_helpers.get_description_embeddings_for_appid(conn, query_appid)
+        query_embed = mean_pooling(all_description_embeddings)
+
+        for current_page in sqlite_helpers.get_paginated_embeddings_for_descriptions(conn, page_size=100):
+            for current_appid, embeddings in current_page.items():
+                if current_appid == query_appid:
+                    continue
+
+                score = compare_all_embeddings_take_max(embeddings, query_embed)
+                name = sqlite_helpers.get_name_for_appid(conn, current_appid)
+
+                add_to_heap(matches, {
+                    'appid': current_appid,
+                    'name': name,
+                    'match_type': 'description',
+                    'score': float(score),
+                }, max_results)
+
+    # Review search v2 - Calculate average embedding for all reviews / mean pooling
+    if query_for_type == 'all' or query_for_type == 'review':
+        query_review_embeddings = sqlite_helpers.get_review_embeddings_for_appid(conn, query_appid)
+        query_flat_embeddings = [review_embedding for review_id in query_review_embeddings for review_embedding in query_review_embeddings[review_id]]
+        query_embed = mean_pooling(query_flat_embeddings)
+
+        appids_with_reviews = sqlite_helpers.get_appids_with_review_embeds(conn)
+
+        for current_appid in appids_with_reviews:
+            if current_appid == query_appid:
+                continue
+            
+            all_review_embeddings = sqlite_helpers.get_review_embeddings_for_appid(conn, current_appid)
+            flat_embeddings = [review_embedding for review_id in all_review_embeddings for review_embedding in all_review_embeddings[review_id]]
+            average_embedding = mean_pooling(flat_embeddings)
+
+            score = cosine_similarity(average_embedding, query_embed)
+            #score = euclidean_distance(average_embedding, query_embed)
+            name = sqlite_helpers.get_name_for_appid(conn, current_appid)
+
+            add_to_heap(matches, {
+                'appid': current_appid,
+                'name': name,
+                'match_type': 'review',
+                'score': float(score),
+            }, max_results)
+
+    # Sort by score (first element of tuple)
+    matches.sort(key=lambda x: x[0], reverse=True)
+
+    # Remove scores and random numbers
+    matches = [match[2] for match in matches]
+
+    return matches
 
 if __name__ == '__main__':
-    server = make_server('localhost', 5000, app)
+    server = make_server('localhost', 5001, app)
     server.serve_forever()

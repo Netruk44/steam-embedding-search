@@ -67,6 +67,29 @@ def check_input_db_tables(conn: sqlite3.Connection) -> bool:
 
 ## Data retrieval
 
+def get_description_embeddings_for_appid(conn: sqlite3.Connection, appid: int) -> List[List[float]]:
+    """
+    Gets the description embeddings for the given appid from the input SQLite database.
+
+    Args:
+        conn (sqlite3.Connection): A connection to the SQLite database.
+        appid (int): The appid to get the description embeddings for.
+
+    Returns:
+        List[List[float]]: The embedding for the game description.
+    """
+    logging.debug(f"Getting description embeddings for appid {appid} from input SQLite database.")
+    c = conn.cursor()
+
+    c.execute(f'''
+        SELECT embedding FROM description_embeddings WHERE appid = ?
+    ''', (appid,))
+    results = c.fetchone()[0]
+
+    c.close()
+
+    return pickle.loads(results)
+
 def get_all_embeddings_for_descriptions(conn: sqlite3.Connection) -> Dict[int,List[List[float]]]:
     """
     Gets all the embeddings for store descriptions from the input SQLite database.
