@@ -23,6 +23,20 @@ with app.app_context():
 
 
 @app.route('/get_results')
+def get_results():
+    # Automatically route to the correct function
+    # If the query is numeric, assume it's an appid
+    # Otherwise, assume it's a query string
+    query = request.args.get('query')
+    if query is None:
+        return 'No query specified', 400
+    
+    try:
+        query = int(query)
+        return get_similar_games()
+    except ValueError:
+        return get_query_results()
+
 @app.route('/get_query_results')
 def get_query_results():
     global instructor_model
@@ -75,7 +89,7 @@ def get_query_results():
 def get_similar_games():
     global instructor_model
 
-    appid = int(request.args.get('appid'))
+    appid = int(request.args.get('query'))
     num_results = request.args.get('num_results')
     num_results = 10 if num_results is None else int(num_results)
     num_results = max(0, min(num_results, 100))
