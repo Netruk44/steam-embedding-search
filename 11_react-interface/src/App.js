@@ -35,9 +35,15 @@ function App() {
         <li>The limit is around 400 words for your description.</li>
         <li>Try describing an imaginary game. What is it about? What do you do? What's the ✨vibe✨? What would people enjoy about it?</li>
       </ul>
+      <p><strong>Alternatively:</strong></p>
+      <ul>
+        <li>Try entering the appid of a game you like to see the most similar games.</li>
+        <li>To get the appid of a game, go to the Steam Store page for it:</li>
+        <li><img src={process.env.PUBLIC_URL + "/appid.png"} style={{ maxWidth: '100%', height: 'auto' }} /></li>
+      </ul>
       <p><i>Note:</i> The search database is not yet fully populated. Only a randomly selected ~15k games can be found here.</p>
       <form onSubmit={handleSearch}>
-        <label htmlFor="search">Description:</label>
+        <label htmlFor="search">Description / AppID:</label>
         <input type="text" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} /><br />
         {isAdvancedOpen && (
           <div class="advanced-section">
