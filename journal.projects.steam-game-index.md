@@ -83,3 +83,10 @@ Search through steam games in natural language.
     * Does query length affect magnitude?
 * [X] Add appid column to review_embeddings table
     * Add index
+* [ ] Research: Investigate different questions
+    * Which games have descriptions that most closely match their reviews?
+    * Which game descriptions are least similar to their reviews?
+    * Which games have the most similar reviews?
+    * Which games have the most different reviews?
+    * Which games have the most similar descriptions?
+    * Are there any games that have a review that is more similar to another game's description than its own description?
