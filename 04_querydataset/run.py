@@ -53,9 +53,48 @@ def main(db, query, similar_to_appid, index, query_for_type, embed_query, model_
         perform_query(conn, query, query_for_type, embed_query, model_name, max_results, verbose)
     else:
         perform_similar_to_appid(conn, similar_to_appid, query_for_type, embed_query, model_name, max_results, verbose)
+        
+    #custom_query(conn, query, query_for_type, embed_query, model_name, max_results, verbose)
     
     # Close connection
     conn.close()
+
+def display_results(results):
+    for result in results:
+        print(f"  {result['appid']}: {result['name']} ({result['match_type']})")
+        print(f"    Match: {result['score'] * 100.0:.2f}%")
+
+def custom_query(conn, query, query_for_type, embed_query, model_name, max_results, verbose):
+    # Which games have descriptions that most closely match their reviews?
+    description_embeds_for_appid = sqlite_helpers.get_all_embeddings_for_descriptions(conn)
+    appids_with_descriptions = set(description_embeds_for_appid.keys())
+    appids_with_reviews = sqlite_helpers.get_appids_with_review_embeds(conn)
+    appids_with_both = appids_with_descriptions.intersection(appids_with_reviews)
+
+    results = []
+
+    for appid in tqdm.tqdm(appids_with_both):
+        # [num_chunks][embedding_size]
+        all_description_embeddings = sqlite_helpers.get_description_embeddings_for_appid(conn, appid)
+        description_embed = mean_pooling(all_description_embeddings)
+
+        # [num_reviews][num_chunks][embedding_size]
+        all_review_embeddings = sqlite_helpers.get_review_embeddings_for_appid(conn, appid)
+        flat_review_embeddings = [review_embedding for review_id in all_review_embeddings for review_embedding in all_review_embeddings[review_id]]
+        review_embed = mean_pooling(flat_review_embeddings)
+
+        score = cosine_similarity(description_embed, review_embed)
+        name = sqlite_helpers.get_name_for_appid(conn, appid)
+
+        add_to_capped_list(results, {
+            'appid': appid,
+            'name': name,
+            'match_type': 'review',
+            'score': score,
+        }, max_results)
+
+    results = sorted(results, key=lambda x: x['score'], reverse=True)
+    display_results(results)
 
 def perform_query(conn, query, query_for_type, embed_query, model_name, max_results, verbose):
     # Load instructor model
@@ -81,18 +120,15 @@ def perform_query(conn, query, query_for_type, embed_query, model_name, max_resu
 
     # Display results
     print(f"Results for query: {query}")
-    for result in results:
-        print(f"  {result['appid']}: {result['name']} ({result['match_type']})")
-        print(f"    Match: {result['score'] * 100.0:.2f}%")
+    display_results(results, query)
 
 def perform_similar_to_appid(conn, similar_to_appid, query_for_type, embed_query, model_name, max_results, verbose):
     results = slow_search_similar(conn, similar_to_appid, query_for_type, max_results)
 
     # Display results
-    print(f"Results for similar games to {sqlite_helpers.get_name_for_appid(conn, similar_to_appid)}")
-    for result in results:
-        print(f"  {result['appid']}: {result['name']} ({result['match_type']})")
-        print(f"    Match: {result['score'] * 100.0:.2f}%")
+    game_name = sqlite_helpers.get_name_for_appid(conn, similar_to_appid)
+    print(f"Games most similar to {game_name}")
+    display_results(results)
 
 def cosine_similarity(a: List[float], b: List[float]) -> float:
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
