@@ -176,18 +176,15 @@ def slow_search(conn, query_embed, query_for_type, max_results=10):
         
         bar.close()
 
-    # Review search v2 - Calculate average embedding for all reviews / mean pooling
+    # Review search - Calculate average embedding for all reviews / mean pooling
     if query_for_type == 'all' or query_for_type == 'review':
         appids_with_reviews = sqlite_helpers.get_appids_with_review_embeds(conn)
 
         for appid in tqdm.tqdm(appids_with_reviews, desc="Reviews"):
             all_review_embeddings = sqlite_helpers.get_review_embeddings_for_appid(conn, appid)
-            flat_embeddings = []
-
-            for review_id in all_review_embeddings:
-                flat_embeddings.extend(all_review_embeddings[review_id])
-            
+            flat_embeddings = [review_embedding for review_id in all_review_embeddings for review_embedding in all_review_embeddings[review_id]]
             average_embedding = mean_pooling(flat_embeddings)
+
             score = cosine_similarity(average_embedding, query_embed)
             #score = euclidean_distance(average_embedding, query_embed)
             name = sqlite_helpers.get_name_for_appid(conn, appid)
@@ -198,38 +195,6 @@ def slow_search(conn, query_embed, query_for_type, max_results=10):
                 'match_type': 'review',
                 'score': score,
             }, max_results)
-
-    # Review search v1 - Compare each review to the query individually
-    #if query_for_type == 'all' or query_for_type == 'review':
-    if False:
-        bar = tqdm.tqdm(total=sqlite_helpers.get_count_embeddings_for_reviews(conn), desc="Reviews")
-
-        for current_page in sqlite_helpers.get_paginated_embeddings_for_reviews(conn, page_size=100):
-            total_score = 0
-            for recommendationid, embeddings in current_page.items():
-                score = compare_all_embeddings_take_max(embeddings, query_embed)
-                total_score += score
-                appid = sqlite_helpers.get_appid_for_recommendationid(conn, recommendationid)
-                name = sqlite_helpers.get_name_for_appid(conn, appid)
-
-                add_to_capped_list(matches, {
-                    'appid': appid,
-                    'name': name,
-                    'match_type': 'review',
-                    'score': score,
-                }, max_results)
-
-                bar.update(1)
-            
-            # Add average score for all reviews
-            #add_to_capped_list(matches, {
-            #    'appid': appid,
-            #    'name': name,
-            #    'match_type': 'review',
-            #    'score': total_score / len(current_page),
-            #}, max_results)
-        
-        bar.close()
 
     # Order by score
     matches = sorted(matches, key=lambda x: x['score'], reverse=True)
