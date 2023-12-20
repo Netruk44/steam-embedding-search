@@ -114,8 +114,10 @@ def update_review_embeddings(conn, instructor):
         review = sqlite_helpers.get_review_for_recommendationid(conn, recommendationid)
         # Generate embeddings
         embeddings = generate_embeddings_for_contents(review, instructor)
+        # Get appid
+        appid = sqlite_helpers.get_appid_for_recommendationid(conn, recommendationid)
         # Insert embeddings
-        sqlite_helpers.insert_review_embeddings(conn, recommendationid, embeddings)
+        sqlite_helpers.insert_review_embeddings(conn, recommendationid, embeddings, appid)
 
 if __name__ == '__main__':
     main()

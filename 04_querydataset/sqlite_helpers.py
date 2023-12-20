@@ -268,9 +268,8 @@ def get_appids_with_review_embeds(conn: sqlite3.Connection) -> Set[int]:
     c = conn.cursor()
 
     c.execute(f'''
-        SELECT appid
+        SELECT DISTINCT appid
         FROM review_embeddings
-        INNER JOIN appreviews USING (recommendationid)
     ''')
     results = c.fetchall()
 
@@ -292,9 +291,10 @@ def get_review_embeddings_for_appid(conn: sqlite3.Connection, appid: int) -> Dic
     logging.debug(f"Getting all review embeddings for appid {appid} from input SQLite database.")
     c = conn.cursor()
 
-    ## HACK: Using external table (appreviews) to get appid
     c.execute(f'''
-        SELECT review_embeddings.recommendationid, embedding FROM review_embeddings INNER JOIN appreviews USING (recommendationid) WHERE appid = ?
+        SELECT recommendationid, embedding
+        FROM review_embeddings
+        WHERE appid = ?
     ''', (appid,))
     results = c.fetchall()
 

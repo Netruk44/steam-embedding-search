@@ -79,3 +79,7 @@ Search through steam games in natural language.
     * Cosine similarity
     * Euclidean distance
     * Dot product
+* [ ] Research: Check embedding magnitudes
+    * Does query length affect magnitude?
+* [X] Add appid column to review_embeddings table
+    * Add index

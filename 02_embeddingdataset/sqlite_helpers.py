@@ -95,8 +95,14 @@ def create_output_db_tables(conn: sqlite3.Connection):
     c.execute('''
         CREATE TABLE review_embeddings (
             recommendationid INTEGER PRIMARY KEY,
-            embedding BLOB NOT NULL
+            embedding BLOB NOT NULL,
+            appid INTEGER NOT NULL
         )
+    ''')
+
+    # Add index to appid column in review_embeddings table
+    c.execute('''
+        CREATE INDEX review_embeddings_appid_index ON review_embeddings (appid)
     ''')
 
     c.close()
@@ -272,7 +278,7 @@ def insert_description_embeddings(conn: sqlite3.Connection, appid: int, embeddin
     conn.commit()
     c.close()
 
-def insert_review_embeddings(conn: sqlite3.Connection, recommendationid: int, embeddings: List[List[float]]):
+def insert_review_embeddings(conn: sqlite3.Connection, recommendationid: int, embeddings: List[List[float]], appid: int):
     """
     Inserts the review embeddings for the given recommendationid into the output SQLite database.
 
@@ -286,9 +292,9 @@ def insert_review_embeddings(conn: sqlite3.Connection, recommendationid: int, em
     c = conn.cursor()
 
     c.execute('''
-        INSERT INTO review_embeddings (recommendationid, embedding)
-        VALUES (?, ?)
-    ''', (recommendationid, pickle.dumps(embeddings)))
+        INSERT INTO review_embeddings (recommendationid, embedding, appid)
+        VALUES (?, ?, ?)
+    ''', (recommendationid, pickle.dumps(embeddings), appid))
 
     conn.commit()
     c.close()
@@ -374,3 +380,27 @@ def get_review_for_recommendationid(conn: sqlite3.Connection, recommendationid: 
     c.close()
 
     return review
+
+def get_appid_for_recommendationid(conn: sqlite3.Connection, recommendationid: int) -> int:
+    """
+    Gets the appid for the given recommendationid from the input SQLite database.
+
+    Args:
+        conn (sqlite3.Connection): A connection to the SQLite database.
+        recommendationid (int): The recommendationid to get the appid for.
+
+    Returns:
+        int: The appid for the given recommendationid.
+    """
+    logging.debug(f"Getting appid for recommendationid {recommendationid} from input SQLite database.")
+
+    c = conn.cursor()
+
+    c.execute(f'''
+        SELECT appid FROM appreviews WHERE recommendationid = ?
+    ''', (recommendationid,))
+    results = c.fetchone()[0]
+
+    c.close()
+
+    return results
