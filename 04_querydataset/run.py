@@ -175,6 +175,7 @@ def slow_search(conn, query_embed, query_for_type, max_results=10):
                 bar.update(1)
         
         bar.close()
+        logging.info(f"Most similar store description: {matches[0]['appid']} - {matches[0]['name']}: ({matches[0]['score'] * 100.0:.2f}%)")
 
     # Review search - Calculate average embedding for all reviews / mean pooling
     if query_for_type == 'all' or query_for_type == 'review':
@@ -230,10 +231,12 @@ def slow_search_similar(conn, query_appid, query_for_type, max_results=10):
                 bar.update(1)
     
         bar.close()
+        logging.info(f"Most similar store description: {matches[0]['appid']} - {matches[0]['name']}: ({matches[0]['score'] * 100.0:.2f}%)")
 
     # Review search v2 - Calculate average embedding for all reviews / mean pooling
     if query_for_type == 'all' or query_for_type == 'review':
         query_review_embeddings = sqlite_helpers.get_review_embeddings_for_appid(conn, query_appid)
+        logging.info(f"Basing review query on {len(query_review_embeddings)} user reviews.")
         query_flat_embeddings = [review_embedding for review_id in query_review_embeddings for review_embedding in query_review_embeddings[review_id]]
         query_embed = mean_pooling(query_flat_embeddings)
 
