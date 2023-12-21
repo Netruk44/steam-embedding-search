@@ -10,8 +10,12 @@ from wsgiref.simple_server import make_server
 from config import database_path, instructor_model_name
 import heapq
 import random
+import hnswlib
+import time
 
 instructor_model = None
+description_index = None
+review_index = None
 
 app = Flask(__name__)
 
@@ -20,6 +24,16 @@ with app.app_context():
     logging.basicConfig(level=logging.INFO)
     print('Loading instructor model...')
     instructor_model = InstructorModel(instructor_model_name)
+
+    print('Loading indexes...')
+    conn = sqlite_helpers.create_connection(database_path)
+    if sqlite_helpers.database_has_indexes_available(conn):
+        description_index = sqlite_helpers.load_latest_description_index(conn)
+        review_index = sqlite_helpers.load_latest_review_index(conn)
+    else:
+        print("No indexes found, exiting...")
+        exit(1)
+    conn.close()
 
 
 @app.route('/get_results')
@@ -69,7 +83,11 @@ def get_query_results():
 
     # Query for results
     conn = sqlite_helpers.create_connection(database_path)
-    results = search(conn, query_embed, type, max_results=num_results)
+    search_time_begin = time.perf_counter()
+    #results = search(conn, query_embed, type, max_results=num_results)
+    results = index_search(conn, query_embed, type, max_results=num_results)
+    search_time_end = time.perf_counter()
+    logging.info(f"Search time: {search_time_end - search_time_begin}")
     conn.close()
 
     # Return results as JSON
@@ -99,7 +117,11 @@ def get_similar_games():
     # Query for results
     conn = sqlite_helpers.create_connection(database_path)
     
-    results = search_similar(conn, appid, 'all', max_results=num_results)
+    #results = search_similar(conn, appid, 'all', max_results=num_results)
+    search_time_begin = time.perf_counter()
+    results = index_search_similar(conn, appid, 'all', max_results=num_results)
+    search_time_end = time.perf_counter()
+    logging.info(f"Search time: {search_time_end - search_time_begin}")
 
     conn.close()
 
@@ -179,6 +201,57 @@ def search(conn, query_embed, query_for_type, max_results=10):
 
     return matches
 
+def index_search(conn, query, query_for_type, max_results=10):
+    matches = []
+    logging.debug(f"Searching for {query_for_type} matches")
+
+    # Store Description Search
+    if query_for_type == 'all' or query_for_type == 'description':
+        #description_index = sqlite_helpers.load_latest_description_index(conn)
+        global description_index
+        appids, distances = description_index.knn_query(query, k=max_results)
+        
+        appids = appids[0]
+        distances = distances[0]
+
+        for appid, distance in zip(appids, distances):
+            appid = int(appid)
+            distance = float(distance)
+
+            name = sqlite_helpers.get_name_for_appid(conn, appid)
+            matches.append({
+                'appid': appid,
+                'name': name,
+                'match_type': 'description',
+                'score': 1.0 - distance,
+            })
+
+    # Review search - Calculate average embedding for all reviews / mean pooling
+    if query_for_type == 'all' or query_for_type == 'review':
+        #review_index = sqlite_helpers.load_latest_review_index(conn)
+        global review_index
+        appids, distances = review_index.knn_query(query, k=max_results)
+
+        appids = appids[0]
+        distances = distances[0]
+
+        for appid, distance in zip(appids, distances):
+            appid = int(appid)
+            distance = float(distance)
+
+            name = sqlite_helpers.get_name_for_appid(conn, appid)
+            matches.append({
+                'appid': appid,
+                'name': name,
+                'match_type': 'review',
+                'score': 1.0 - distance,
+            })
+
+    # Order by score
+    matches = sorted(matches, key=lambda x: x['score'], reverse=True)
+
+    return matches[:max_results]
+
 def search_similar(conn, query_appid, query_for_type, max_results=10):
     matches = []
     logging.debug(f"Searching for similar games to {sqlite_helpers.get_name_for_appid(conn, query_appid)}")
@@ -237,6 +310,74 @@ def search_similar(conn, query_appid, query_for_type, max_results=10):
     matches = [match[2] for match in matches]
 
     return matches
+
+def index_search_similar(conn, query_appid, query_for_type, max_results=10):
+    matches = []
+    logging.debug(f"Searching for similar games to {sqlite_helpers.get_name_for_appid(conn, query_appid)}")
+
+    # Store Description Search
+    if query_for_type == 'all' or query_for_type == 'description':
+        #description_index = sqlite_helpers.load_latest_description_index(conn)
+        global description_index
+        all_description_embeddings = sqlite_helpers.get_description_embeddings_for_appid(conn, query_appid)
+        query_embed = mean_pooling(all_description_embeddings)
+
+        # Add 1 to max results to account for the query returning
+        # the app we're searching for
+        appids, distances = description_index.knn_query(query_embed, k=max_results + 1)
+        
+        appids = appids[0]
+        distances = distances[0]
+
+        for appid, distance in zip(appids, distances):
+            appid = int(appid)
+            distance = float(distance)
+
+            if appid == query_appid:
+                continue
+
+            name = sqlite_helpers.get_name_for_appid(conn, appid)
+            matches.append({
+                'appid': appid,
+                'name': name,
+                'match_type': 'description',
+                'score': 1.0 - distance,
+            })
+
+    # Review search - Calculate average embedding for all reviews / mean pooling
+    if query_for_type == 'all' or query_for_type == 'review':
+        #review_index = sqlite_helpers.load_latest_review_index(conn)
+        global review_index
+        
+        query_review_embeddings = sqlite_helpers.get_review_embeddings_for_appid(conn, query_appid)
+        logging.info(f"Basing review query on {len(query_review_embeddings)} user reviews.")
+        query_flat_embeddings = [review_embedding for review_id in query_review_embeddings for review_embedding in query_review_embeddings[review_id]]
+        query_embed = mean_pooling(query_flat_embeddings)
+
+        appids, distances = review_index.knn_query(query_embed, k=max_results + 1)
+
+        appids = appids[0]
+        distances = distances[0]
+
+        for appid, distance in zip(appids, distances):
+            appid = int(appid)
+            distance = float(distance)
+
+            if appid == query_appid:
+                continue
+
+            name = sqlite_helpers.get_name_for_appid(conn, appid)
+            matches.append({
+                'appid': appid,
+                'name': name,
+                'match_type': 'review',
+                'score': 1.0 - distance,
+            })
+
+    # Order by score
+    matches = sorted(matches, key=lambda x: x['score'], reverse=True)
+
+    return matches[:max_results]
 
 if __name__ == '__main__':
     server = make_server('localhost', 5001, app)

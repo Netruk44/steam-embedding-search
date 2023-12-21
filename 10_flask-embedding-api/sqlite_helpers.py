@@ -2,6 +2,7 @@ import sqlite3
 import logging
 from typing import List, Optional, Set, Dict, Generator
 import pickle
+import hnswlib
 
 ## Init
 
@@ -268,9 +269,8 @@ def get_appids_with_review_embeds(conn: sqlite3.Connection) -> Set[int]:
     c = conn.cursor()
 
     c.execute(f'''
-        SELECT appid
+        SELECT DISTINCT appid
         FROM review_embeddings
-        INNER JOIN appreviews USING (recommendationid)
     ''')
     results = c.fetchall()
 
@@ -292,12 +292,97 @@ def get_review_embeddings_for_appid(conn: sqlite3.Connection, appid: int) -> Dic
     logging.debug(f"Getting all review embeddings for appid {appid} from input SQLite database.")
     c = conn.cursor()
 
-    ## HACK: Using external table (appreviews) to get appid
     c.execute(f'''
-        SELECT review_embeddings.recommendationid, embedding FROM review_embeddings INNER JOIN appreviews USING (recommendationid) WHERE appid = ?
+        SELECT recommendationid, embedding
+        FROM review_embeddings
+        WHERE appid = ?
     ''', (appid,))
     results = c.fetchall()
 
     c.close()
 
     return {recommendationid: pickle.loads(embedding) for recommendationid, embedding in results}
+
+def database_has_indexes_available(conn: sqlite3.Connection) -> bool:
+    """
+    Checks if the database has both description and review indexes available.
+
+    Args:
+        conn (sqlite3.Connection): A connection to the SQLite database.
+
+    Returns:
+        bool: True if the database has both indexes available, False otherwise.
+    """
+    logging.debug(f"Checking if database has an index available.")
+
+    required_tables = ['description_embeddings_hnsw_index', 'review_embeddings_hnsw_index']
+    tables_exist = [check_table(conn, table_name) for table_name in required_tables]
+    if not all(tables_exist):
+        return False
+
+    # Check if at least one index has been created in each table
+    c = conn.cursor()
+    
+    c.execute(f'''
+        SELECT count(*) FROM description_embeddings_hnsw_index
+    ''')
+    description_index_count = c.fetchone()[0]
+
+    c.execute(f'''
+        SELECT count(*) FROM review_embeddings_hnsw_index
+    ''')
+    review_index_count = c.fetchone()[0]
+
+    return description_index_count > 0 and review_index_count > 0
+
+def load_latest_description_index(conn: sqlite3.Connection) -> hnswlib.Index:
+    """
+    Loads the latest description index from the database.
+
+    Args:
+        conn (sqlite3.Connection): A connection to the SQLite database.
+
+    Returns:
+        hnswlib.Index: The description index.
+    """
+    logging.debug(f"Loading latest description index from database.")
+
+    c = conn.cursor()
+    
+    c.execute(f'''
+        SELECT pickle
+        FROM description_embeddings_hnsw_index
+        ORDER BY creation_time DESC
+        LIMIT 1
+    ''')
+    description_index_pickle = c.fetchone()[0]
+
+    c.close()
+
+    return pickle.loads(description_index_pickle)
+
+def load_latest_review_index(conn: sqlite3.Connection) -> hnswlib.Index:
+    """
+    Loads the latest review index from the database.
+
+    Args:
+        conn (sqlite3.Connection): A connection to the SQLite database.
+
+    Returns:
+        hnswlib.Index: The review index.
+    """
+    logging.debug(f"Loading latest review index from database.")
+
+    c = conn.cursor()
+    
+    c.execute(f'''
+        SELECT pickle
+        FROM review_embeddings_hnsw_index
+        ORDER BY creation_time DESC
+        LIMIT 1
+    ''')
+    review_index_pickle = c.fetchone()[0]
+
+    c.close()
+
+    return pickle.loads(review_index_pickle)

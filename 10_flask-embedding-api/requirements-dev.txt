@@ -5,3 +5,4 @@ sentence-transformers
 InstructorEmbedding
 gunicorn
 wget
+hnswlib
