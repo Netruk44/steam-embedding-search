@@ -59,7 +59,7 @@ def check_input_db_tables(conn: sqlite3.Connection) -> bool:
     logging.debug(f"Checking if required tables exist in input SQLite database.")
     #required_tables = ["description_embeddings", "review_embeddings", "gamelist"]
     # Updated for hack
-    required_tables = ["description_embeddings", "review_embeddings", "gamelist", "appreviews"]
+    required_tables = ["description_embeddings", "review_embeddings", "gamelist"]
     
     tables_exist = [check_table(conn, table_name) for table_name in required_tables]
     
@@ -224,7 +224,7 @@ def get_appid_for_recommendationid(conn: sqlite3.Connection, recommendationid: i
     c = conn.cursor()
 
     c.execute(f'''
-        SELECT appid FROM appreviews WHERE recommendationid = ?
+        SELECT appid FROM review_embeddings WHERE recommendationid = ?
     ''', (recommendationid,))
     results = c.fetchone()[0]
 
