@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 venv_dir=".venv_03"

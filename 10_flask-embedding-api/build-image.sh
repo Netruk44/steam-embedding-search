@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 # Make sure $1 is set
