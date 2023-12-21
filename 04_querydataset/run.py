@@ -8,23 +8,28 @@ import logging
 import os
 from typing import List
 import numpy as np
+import hnswlib
+import time
 
 COLOR_DARK_GREY = "\x1b[38;5;240m"
 COLOR_BOLD = "\x1b[1m"
 COLOR_RESET = "\x1b[0m"
 LOGGING_FORMAT = COLOR_DARK_GREY + '[%(asctime)s - %(name)s]' + COLOR_RESET + COLOR_BOLD + ' %(levelname)s:' + COLOR_RESET + ' %(message)s'
 
+description_index = None
+review_index = None
+
 @click.command()
 @click.option('--db', required=True, help='Path to SQLite database')
 @click.option('--query', help='Query to search for')
 @click.option('--similar-to-appid', default=None, help='AppID to search for similar games', type=int)
-@click.option('--index', default=None, help='Path to index file')
+@click.option('--use-index', default=True, help='Whether to use index file when searching')
 @click.option('--query-for-type', default='all', help='Type of data to search for (all, description, review)')
 @click.option('--embed-query', default='Represent a video game that has a description of:', help='Embedding instruction for query')
 @click.option('--model-name', default='hkunlp/instructor-large', help='Name of the instructor model to use')
 @click.option('--max-results', default=10, help='Maximum number of results to return')
 @click.option('--verbose', is_flag=True, help='Print verbose output')
-def main(db, query, similar_to_appid, index, query_for_type, embed_query, model_name, max_results, verbose):
+def main(db, query, similar_to_appid, use_index, query_for_type, embed_query, model_name, max_results, verbose):
     logging.basicConfig(format = LOGGING_FORMAT, level = logging.INFO if not verbose else logging.DEBUG)
 
     # Load input sqlite database
@@ -48,11 +53,24 @@ def main(db, query, similar_to_appid, index, query_for_type, embed_query, model_
     if query is not None and similar_to_appid is not None:
         logging.error("Both query and appid provided, only one is allowed at a time")
         exit(1)
+
+    # Check index
+    if use_index and not sqlite_helpers.database_has_indexes_available(conn):
+        logging.warning("Database does not have indexes available. Disabling index usage.")
+        use_index = False
+    
+    if use_index:
+        global description_index
+        global review_index
+
+        logging.info("Loading indexes...")
+        description_index = sqlite_helpers.load_latest_description_index(conn)
+        review_index = sqlite_helpers.load_latest_review_index(conn)
     
     if query is not None:
-        perform_query(conn, query, query_for_type, embed_query, model_name, max_results, verbose)
+        perform_query(conn, query, query_for_type, embed_query, model_name, max_results, use_index, verbose)
     else:
-        perform_similar_to_appid(conn, similar_to_appid, query_for_type, embed_query, model_name, max_results, verbose)
+        perform_similar_to_appid(conn, similar_to_appid, query_for_type, embed_query, model_name, max_results, use_index, verbose)
         
     #custom_query(conn, query, query_for_type, embed_query, model_name, max_results, verbose)
     
@@ -96,7 +114,7 @@ def custom_query(conn, query, query_for_type, embed_query, model_name, max_resul
     results = sorted(results, key=lambda x: x['score'], reverse=True)
     display_results(results)
 
-def perform_query(conn, query, query_for_type, embed_query, model_name, max_results, verbose):
+def perform_query(conn, query, query_for_type, embed_query, model_name, max_results, use_index, verbose):
     # Load instructor model
     # Needs to match the model used to generate the embeddings
     instructor = InstructorModel(
@@ -115,15 +133,31 @@ def perform_query(conn, query, query_for_type, embed_query, model_name, max_resu
     instructor.embedding_instruction = embed_query
     query_embed: List[float] = instructor.generate_embedding_for_query(query, verbose)
 
-    # Do a linear search
-    results = slow_search(conn, query_embed, query_for_type, max_results)
+    time_start = time.perf_counter()
+
+    if use_index:
+        results = index_search(conn, query_embed, query_for_type, max_results)
+    else:
+        # Do a linear search
+        results = slow_search(conn, query_embed, query_for_type, max_results)
+        
+    time_end = time.perf_counter()
+
+    logging.info(f"Query took {time_end - time_start:.2f} seconds")
 
     # Display results
     print(f"Results for query: {query}")
-    display_results(results, query)
+    display_results(results)
 
-def perform_similar_to_appid(conn, similar_to_appid, query_for_type, embed_query, model_name, max_results, verbose):
-    results = slow_search_similar(conn, similar_to_appid, query_for_type, max_results)
+def perform_similar_to_appid(conn, similar_to_appid, query_for_type, embed_query, model_name, max_results, use_index, verbose):
+    time_start = time.perf_counter()
+    if use_index:
+        results = index_search_similar(conn, similar_to_appid, query_for_type, max_results)
+    else:
+        results = slow_search_similar(conn, similar_to_appid, query_for_type, max_results)
+    time_end = time.perf_counter()
+
+    logging.info(f"Query took {time_end - time_start:.2f} seconds")
 
     # Display results
     game_name = sqlite_helpers.get_name_for_appid(conn, similar_to_appid)
@@ -202,6 +236,57 @@ def slow_search(conn, query_embed, query_for_type, max_results=10):
 
     return matches
 
+def index_search(conn, query, query_for_type, max_results=10):
+    matches = []
+    logging.debug(f"Searching for {query_for_type} matches")
+
+    # Store Description Search
+    if query_for_type == 'all' or query_for_type == 'description':
+        #description_index = sqlite_helpers.load_latest_description_index(conn)
+        global description_index
+        appids, distances = description_index.knn_query(query, k=max_results)
+        
+        appids = appids[0]
+        distances = distances[0]
+
+        for appid, distance in zip(appids, distances):
+            appid = int(appid)
+            distance = float(distance)
+
+            name = sqlite_helpers.get_name_for_appid(conn, appid)
+            matches.append({
+                'appid': appid,
+                'name': name,
+                'match_type': 'description',
+                'score': 1.0 - distance,
+            })
+
+    # Review search - Calculate average embedding for all reviews / mean pooling
+    if query_for_type == 'all' or query_for_type == 'review':
+        #review_index = sqlite_helpers.load_latest_review_index(conn)
+        global review_index
+        appids, distances = review_index.knn_query(query, k=max_results)
+
+        appids = appids[0]
+        distances = distances[0]
+
+        for appid, distance in zip(appids, distances):
+            appid = int(appid)
+            distance = float(distance)
+
+            name = sqlite_helpers.get_name_for_appid(conn, appid)
+            matches.append({
+                'appid': appid,
+                'name': name,
+                'match_type': 'review',
+                'score': 1.0 - distance,
+            })
+
+    # Order by score
+    matches = sorted(matches, key=lambda x: x['score'], reverse=True)
+
+    return matches[:max_results]
+
 def slow_search_similar(conn, query_appid, query_for_type, max_results=10):
     matches = []
     logging.debug(f"Searching for similar games to {sqlite_helpers.get_name_for_appid(conn, query_appid)}")
@@ -264,6 +349,74 @@ def slow_search_similar(conn, query_appid, query_for_type, max_results=10):
     # Order by score
     matches = sorted(matches, key=lambda x: x['score'], reverse=True)
     return matches
+
+def index_search_similar(conn, query_appid, query_for_type, max_results=10):
+    matches = []
+    logging.debug(f"Searching for similar games to {sqlite_helpers.get_name_for_appid(conn, query_appid)}")
+
+    # Store Description Search
+    if query_for_type == 'all' or query_for_type == 'description':
+        #description_index = sqlite_helpers.load_latest_description_index(conn)
+        global description_index
+        all_description_embeddings = sqlite_helpers.get_description_embeddings_for_appid(conn, query_appid)
+        query_embed = mean_pooling(all_description_embeddings)
+
+        # Add 1 to max results to account for the query returning
+        # the app we're searching for
+        appids, distances = description_index.knn_query(query_embed, k=max_results + 1)
+        
+        appids = appids[0]
+        distances = distances[0]
+
+        for appid, distance in zip(appids, distances):
+            appid = int(appid)
+            distance = float(distance)
+
+            if appid == query_appid:
+                continue
+
+            name = sqlite_helpers.get_name_for_appid(conn, appid)
+            matches.append({
+                'appid': appid,
+                'name': name,
+                'match_type': 'description',
+                'score': 1.0 - distance,
+            })
+
+    # Review search - Calculate average embedding for all reviews / mean pooling
+    if query_for_type == 'all' or query_for_type == 'review':
+        #review_index = sqlite_helpers.load_latest_review_index(conn)
+        global review_index
+        
+        query_review_embeddings = sqlite_helpers.get_review_embeddings_for_appid(conn, query_appid)
+        logging.info(f"Basing review query on {len(query_review_embeddings)} user reviews.")
+        query_flat_embeddings = [review_embedding for review_id in query_review_embeddings for review_embedding in query_review_embeddings[review_id]]
+        query_embed = mean_pooling(query_flat_embeddings)
+
+        appids, distances = review_index.knn_query(query_embed, k=max_results + 1)
+
+        appids = appids[0]
+        distances = distances[0]
+
+        for appid, distance in zip(appids, distances):
+            appid = int(appid)
+            distance = float(distance)
+
+            if appid == query_appid:
+                continue
+
+            name = sqlite_helpers.get_name_for_appid(conn, appid)
+            matches.append({
+                'appid': appid,
+                'name': name,
+                'match_type': 'review',
+                'score': 1.0 - distance,
+            })
+
+    # Order by score
+    matches = sorted(matches, key=lambda x: x['score'], reverse=True)
+
+    return matches[:max_results]
 
 if __name__ == '__main__':
     main()
