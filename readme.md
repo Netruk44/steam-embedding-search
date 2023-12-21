@@ -56,9 +56,10 @@ Describe the kind of game you're looking for, and get a list of games that close
 - With RTX 3090, takes about 30 minutes per 5,000 new items added by step 01.
 - Example invocation: `python run.py --db ./steam.db --model-name hkunlp/instructor-xl`
 
-### ~~03_index~~
-- **TODO**: Use FAISS to index the embeddings to search quickly.
-- Not yet implemented.
+### 03_hnsw-index
+- **Requirements**: A good CPU is recommended
+- **Overview**: Uses [hnswlib](https://github.com/nmslib/hnswlib) to create a nearest neighbor index for the embeddings.
+- Work in progress.
 
 ### 04_querydataset
 - **Requirements**: Fairly low. A CPU with 3-6 GB of RAM.
