@@ -2,6 +2,29 @@ import sqlite3
 import logging
 from typing import List, Optional, Set, Dict
 import pickle
+import json
+
+
+'''
+Steam Content Descriptors:
+
+1 - Some Nudity or Sexual Content
+    Includes: Baldur's Gate 3, Cyberpunk 2077, Skyrim, etc.
+
+2 - Frequent Violence or Gore
+    Includes: Elden Ring, Counter-Strike 2, Call of Duty
+
+3 - Adult Only Sexual Content
+    Includes: Pornographic games
+
+4 - Frequent Nudity or Sexual Content
+    Includes: Hentai games
+
+5 - General Mature Content
+    Includes: GTA 5, RDR 2, Disco Elysium, etc.
+
+'''
+banned_descriptors = set([3, 4]) # Will not generate embeddings for these games
 
 def create_connection(db_file: str = "steam.db") -> sqlite3.Connection:
     """
@@ -314,15 +337,15 @@ def get_game_appids_without_description_embeddings(conn: sqlite3.Connection) -> 
     c = conn.cursor()
 
     c.execute('''
-        SELECT appid FROM appdetails 
+        SELECT appid, content_descriptors FROM appdetails 
         WHERE appid NOT IN (
             SELECT appid FROM description_embeddings
         )
         AND type = 'game'
-        AND required_age < 18
     ''')
 
-    appids = [appid[0] for appid in c.fetchall()]
+    # Only return appids for games whose content descriptors does not contain any banned descriptors
+    appids = [appid[0] for appid in c.fetchall() if not any(descriptor in banned_descriptors for descriptor in json.loads(appid[1]))]
 
     c.close()
 
@@ -343,15 +366,15 @@ def get_recommendationids_without_embeddings(conn):
     c = conn.cursor()
 
     c.execute('''
-        SELECT recommendationid FROM appreviews
+        SELECT recommendationid, content_descriptors FROM appreviews
         JOIN appdetails USING (appid)
         WHERE recommendationid NOT IN (
             SELECT recommendationid FROM review_embeddings
         ) AND type = 'game'
-        AND required_age < 18
     ''')
 
-    recommendationids = [recommendationid[0] for recommendationid in c.fetchall()]
+    ## Only return recommendationids for games whose content descriptors does not contain any banned descriptors
+    recommendationids = [recommendationid[0] for recommendationid in c.fetchall() if not any(descriptor in banned_descriptors for descriptor in json.loads(recommendationid[1]))]
 
     c.close()
 

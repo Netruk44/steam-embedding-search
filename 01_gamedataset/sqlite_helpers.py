@@ -78,7 +78,7 @@ def create_tables(conn):
             appid INTEGER PRIMARY KEY,
             storedescription TEXT,
             type TEXT,
-            required_age INTEGER,
+            content_descriptors TEXT,
         )
     ''')
 
@@ -179,9 +179,9 @@ def insert_appdetails(conn, appid, appdetails):
     c = conn.cursor()
 
     c.execute('''
-        INSERT OR IGNORE INTO appdetails (datajson, appid, storedescription, type, required_age)
+        INSERT OR IGNORE INTO appdetails (datajson, appid, storedescription, type, content_descriptors)
         VALUES (?, ?, ?, ?, ?)
-    ''', (json.dumps(appdetails), appid, appdetails["detailed_description"], appdetails["type"], int(appdetails["required_age"])))
+    ''', (json.dumps(appdetails), appid, appdetails["detailed_description"], appdetails["type"], str(appdetails["content_descriptors"]["ids"])))
 
     conn.commit()
     c.close()
