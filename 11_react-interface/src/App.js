@@ -25,7 +25,8 @@ function App() {
     <div>
       <h1>Embedding-Based Steam Search</h1>
       <div class="source">
-        <img src={process.env.PUBLIC_URL + "/GitHub-logo.png"} style={{ maxWidth: '24px', height: 'auto' }} /><strong>Source:</strong><a href="https://github.com/Netruk44/steam-text-search">Netruk44/steam-text-search</a>
+        <img src={process.env.PUBLIC_URL + "/GitHub-logo.png"} style={{ maxWidth: '24px', height: 'auto' }} /><strong>Source:</strong><a href="https://github.com/Netruk44/steam-text-search">Netruk44/steam-text-search</a><br />
+        <img src="https://www.danieltperry.me/ico/favicon-32x32.png" style={{ maxWidth: '24px', height: 'auto' }} /><strong>Dev Journal:</strong> On my <a href="https://www.danieltperry.me/post/instructor-as-search-engine/">personal website</a>.
       </div>
       <p>Describe the kind of game you're looking for, see what you get!</p>
       <p><i>e.g. "An open world exploration-based game featuring resource gathering."</i></p>
@@ -34,6 +35,7 @@ function App() {
         <li>Longer descriptions tend to get better results. Short descriptions like "amazing visuals" and "farming sim" tend to return bad results.</li>
         <li>The limit is around 400 words for your description.</li>
         <li>Try describing an imaginary game. What is it about? What do you do? What's the ✨vibe✨? What would people enjoy about it?</li>
+        <li>Try writing a review for the imaginary game. What would people say about it?</li>
       </ul>
       <p><strong>Alternatively:</strong></p>
       <ul>
