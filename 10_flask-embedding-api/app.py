@@ -251,7 +251,16 @@ def index_search(conn, query, query_for_type, max_results=10):
     # Order by score
     matches = sorted(matches, key=lambda x: x['score'], reverse=True)
 
-    return matches[:max_results]
+    # Remove duplicate appids
+    # This can happen if a game has both a description and review that match the query
+    appids_seen = set()
+    deduped_matches = []
+    for match in matches:
+        if match['appid'] not in appids_seen:
+            deduped_matches.append(match)
+            appids_seen.add(match['appid'])
+
+    return deduped_matches[:max_results]
 
 def search_similar(conn, query_appid, query_for_type, max_results=10):
     matches = []
@@ -378,8 +387,16 @@ def index_search_similar(conn, query_appid, query_for_type, max_results=10):
     # Order by score
     matches = sorted(matches, key=lambda x: x['score'], reverse=True)
 
+    # Remove duplicate appids
+    appids_seen = set()
+    deduped_matches = []
+    for match in matches:
+        if match['appid'] not in appids_seen:
+            deduped_matches.append(match)
+            appids_seen.add(match['appid'])
+
     return matches[:max_results]
 
 if __name__ == '__main__':
-    server = make_server('localhost', 5001, app)
+    server = make_server('localhost', 5000, app)
     server.serve_forever()
