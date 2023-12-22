@@ -17,4 +17,5 @@ ENV TOKENIZERS_PARALLELISM=false
 
 # Run app.py when the container launches
 #CMD ["python3", "app.py"]
-CMD ["gunicorn", "-b", "0.0.0.0:5000", "app:app"]
+#CMD ["gunicorn", "-b", "0.0.0.0:5000", "app:app"]
+CMD ["gunicorn", "-b", "0.0.0.0:5000", "--log-file", "-", "--log-level", "debug", "--timeout", "120", "app:app"]
