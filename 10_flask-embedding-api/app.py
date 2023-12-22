@@ -395,7 +395,7 @@ def index_search_similar(conn, query_appid, query_for_type, max_results=10):
             deduped_matches.append(match)
             appids_seen.add(match['appid'])
 
-    return matches[:max_results]
+    return deduped_matches[:max_results]
 
 if __name__ == '__main__':
     server = make_server('localhost', 5000, app)
