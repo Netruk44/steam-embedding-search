@@ -115,6 +115,10 @@ input[type="text"], textarea {
 
 .result-info img {
   border-radius: 8px;
+  max-width: 240px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
 }
 
 .result-navigation {

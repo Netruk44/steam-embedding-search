@@ -92,7 +92,7 @@ function App() {
             <div className="results-card" key={index}>
               <a href={`https://store.steampowered.com/app/${result.appid}`} target="_blank" >
                 <div className="result-info">
-                  <img src={`https://cdn.akamai.steamstatic.com/steam/apps/${result.appid}/header.jpg`} style={{ maxWidth: '240px', height: 'auto' }} />
+                  <img src={`https://cdn.akamai.steamstatic.com/steam/apps/${result.appid}/header.jpg`} />
                   <div>
                     <h3>{result.name}</h3>
                     <span>App ID:</span> {result.appid}<br />
