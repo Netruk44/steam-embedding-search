@@ -95,14 +95,35 @@ input[type="text"], textarea {
   padding: 12px; 
   border-radius: 8px; 
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08); 
-  display: flex; 
+  display: grid; 
   align-items: center; 
   transition: all 0.2s ease; 
   border: 1px solid #ccc;
-  text-decoration: none; /* Hide <a> underlines */
-  cursor: pointer; /* Change mouse cursor */
-  color: black; /* Change text color */
 } 
+
+.results-card a {
+  text-decoration: none; /* Hide <a> underlines */
+  color: black; /* Change text color */
+  cursor: pointer; /* Change mouse cursor */
+}
+
+.result-info {
+  grid-column: 1;
+  grid-row: 1;
+  display:flex;
+}
+
+.result-info img {
+  border-radius: 8px;
+}
+
+.result-navigation {
+  grid-column: 1;
+  grid-row: 2;
+  display: flex;
+  background-color: #e2e7ed;
+  border-radius: 8px;
+}
  
 .results-card:hover { 
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.16); 

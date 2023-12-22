@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 function App() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -10,8 +10,7 @@ function App() {
   const [numResults, setNumResults] = useState(10);
   const [type, setType] = useState('all');
 
-  const handleSearch = (event) => {
-    event.preventDefault();
+  const doSearch = () => {
     setIsSearching(true);
 
     fetch(`https://steamvibe-api.azurewebsites.net/get_results?query=${encodeURIComponent(searchTerm)}&instruction=${encodeURIComponent(instruction)}&num_results=${numResults}&type=${type}`)
@@ -19,12 +18,29 @@ function App() {
       .then(data => setSearchResults(data))
       .catch(error => console.error('Error:', error))
       .finally(() => setIsSearching(false));
+  }
+
+  const doManualSearch = (searchTerm) => {
+    setIsSearching(true);
+    setSearchTerm(searchTerm);
+
+    fetch(`https://steamvibe-api.azurewebsites.net/get_results?query=${encodeURIComponent(searchTerm)}&instruction=${encodeURIComponent(instruction)}&num_results=${numResults}&type=${type}`)
+      .then(response => response.json())
+      .then(data => setSearchResults(data))
+      .catch(error => console.error('Error:', error))
+      .finally(() => setIsSearching(false));
+  }
+
+
+  const handleSearch = (event) => {
+    event.preventDefault();
+    doSearch();
   };
 
   return (
     <div>
       <h1>Embedding-Based Steam Search</h1>
-      <div class="source">
+      <div className="source">
         <img src={process.env.PUBLIC_URL + "/GitHub-logo.png"} style={{ maxWidth: '24px', height: 'auto' }} /><strong>Source:</strong><a href="https://github.com/Netruk44/steam-text-search">Netruk44/steam-text-search</a><br />
         <img src="https://www.danieltperry.me/ico/favicon-32x32.png" style={{ maxWidth: '24px', height: 'auto' }} /><strong>Dev Journal:</strong> On my <a href="https://www.danieltperry.me/post/instructor-as-search-engine/">personal website</a>.
       </div>
@@ -47,7 +63,7 @@ function App() {
         <label htmlFor="search">Description / AppID:</label>
         <input type="text" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} /><br />
         {isAdvancedOpen && (
-          <div class="advanced-section">
+          <div className="advanced-section">
             <h3>Advanced Options</h3>
             <label htmlFor="instruction">Instruction:</label>
             <input type="text" value={instruction} onChange={(event) => setInstruction(event.target.value)} placeholder="Represent a video game that has a description of:" />
@@ -62,8 +78,8 @@ function App() {
           </div>
         )}
         <button type="submit" disabled={isSearching}>{isSearching ? 'Searching...' : 'Search'}</button>
-        <button type="button" class='btn-clear' onClick={() => setSearchTerm('')}>Clear</button>
-        <button type="button" class='btn-advanced' onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}>
+        <button type="button" className='btn-clear' onClick={() => setSearchTerm('')}>Clear</button>
+        <button type="button" className='btn-advanced' onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}>
           {isAdvancedOpen ? 'Hide Advanced' : 'Open Advanced'}
         </button>
       </form>
@@ -73,15 +89,24 @@ function App() {
       <p><strong>Note for the note:</strong> Scores above 80% do not guarantee a good match either 😊.</p>
       <div className="results-container">
         {searchResults.map((result, index) => (
-          <a key={index} href={`https://store.steampowered.com/app/${result.appid}`} className="results-card" target="_blank" >
-            <img src={`https://cdn.akamai.steamstatic.com/steam/apps/${result.appid}/header.jpg`} style={{ maxWidth: '240px', height: 'auto' }} />
-            <div>
-              <h3>{result.name}</h3>
-              <span>App ID:</span> {result.appid}<br />
-              <span>Match Type:</span> {result.match_type}<br />
-              <span>Score:</span> <span className="score">{(result.score * 100).toFixed(2)}%</span>
+            <div className="results-card" key={index}>
+              <a href={`https://store.steampowered.com/app/${result.appid}`} target="_blank" >
+                <div className="result-info">
+                  <img src={`https://cdn.akamai.steamstatic.com/steam/apps/${result.appid}/header.jpg`} style={{ maxWidth: '240px', height: 'auto' }} />
+                  <div>
+                    <h3>{result.name}</h3>
+                    <span>App ID:</span> {result.appid}<br />
+                    <span>Match Type:</span> {result.match_type}<br />
+                    <span>Score:</span> <span className="score">{(result.score * 100).toFixed(2)}%</span>
+                  </div>
+                </div>
+              </a>
+              <div className="result-navigation">
+                <button className="more-like-this-button" onClick={() => {
+                  doManualSearch(result.appid);
+                }}>More like this</button>
+              </div>
             </div>
-          </a>
         ))}
       </div>
     </div>
