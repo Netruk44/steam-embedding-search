@@ -22,16 +22,17 @@ app = Flask(__name__)
 # Startup code
 with app.app_context():
     logging.basicConfig(level=logging.INFO)
-    print('Loading instructor model...')
+    logging.info('Loading instructor model...')
     instructor_model = InstructorModel(instructor_model_name)
 
-    print('Loading indexes...')
+    logging.info('Loading database...')
     conn = sqlite_helpers.create_connection(database_path)
     if sqlite_helpers.database_has_indexes_available(conn):
+        logging.info('Loading indexes...')
         description_index = sqlite_helpers.load_latest_description_index(conn)
         review_index = sqlite_helpers.load_latest_review_index(conn)
     else:
-        print("No indexes found, exiting...")
+        logging.fatal("No indexes found, exiting...")
         exit(1)
     conn.close()
 
