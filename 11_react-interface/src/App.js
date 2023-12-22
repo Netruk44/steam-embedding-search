@@ -41,7 +41,6 @@ function App() {
         <li>To get the appid of a game, go to the Steam Store page for it:</li>
         <li><img src={process.env.PUBLIC_URL + "/appid.png"} style={{ maxWidth: '100%', height: 'auto' }} /></li>
       </ul>
-      <p><i>Note:</i> The search database is not yet fully populated. Only a randomly selected ~15k games can be found here.</p>
       <form onSubmit={handleSearch}>
         <label htmlFor="search">Description / AppID:</label>
         <input type="text" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} /><br />
@@ -66,7 +65,6 @@ function App() {
           {isAdvancedOpen ? 'Hide Advanced' : 'Open Advanced'}
         </button>
       </form>
-      <p><em>The first search may take up to about 15 seconds. Searches after that should take &lt;5 seconds.</em></p>
       <hr />
       <h2>Results</h2>
       <p><strong>Note:</strong> Scores below 80% are usually not great matches.</p>
