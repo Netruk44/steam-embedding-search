@@ -112,15 +112,19 @@ def get_similar_games():
     num_results = request.args.get('num_results')
     num_results = 10 if num_results is None else int(num_results)
     num_results = max(0, min(num_results, 100))
+    type = request.args.get('type')
+    type = 'all' if type is None else type
+
+    if type not in ['all', 'description', 'review']:
+        return 'Invalid type, must be one of: all, description, review', 400
 
     logging.info(f'Request: {request.url}')
 
     # Query for results
     conn = sqlite_helpers.create_connection(database_path)
     
-    #results = search_similar(conn, appid, 'all', max_results=num_results)
     search_time_begin = time.perf_counter()
-    results = index_search_similar(conn, appid, 'all', max_results=num_results)
+    results = index_search_similar(conn, appid, type, max_results=num_results)
     search_time_end = time.perf_counter()
     logging.info(f"Search time: {search_time_end - search_time_begin}")
 
