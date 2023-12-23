@@ -69,7 +69,7 @@ Search through steam games in natural language.
 
 ### Future
 *Pending*
-* [ ] Create FAISS index for dataset
+* [X] Create ~~FAISS~~ hnsw index for dataset
 * [ ] Publicize
     * [ ] Create blog post
     * [ ] Post to some website
@@ -90,3 +90,5 @@ Search through steam games in natural language.
     * Which games have the most different reviews?
     * Which games have the most similar descriptions?
     * Are there any games that have a review that is more similar to another game's description than its own description?
+* [ ] 10_flask_api: Replace python wget with wget from apt
+    * Python version of wget is like, 8 years old and probably awfully insecure...
