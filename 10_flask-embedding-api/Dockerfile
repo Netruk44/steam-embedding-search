@@ -1,6 +1,6 @@
 
 # Use an official Python runtime as a parent image
-FROM steamvibes-api-base:v0.4
+FROM steamvibes-api-base:v0.4.1
 #FROM netruk44.azurecr.io/steamvibes-api-base:latest
 
 # Set the working directory to /app
