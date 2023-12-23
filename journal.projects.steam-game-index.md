@@ -71,7 +71,7 @@ Search through steam games in natural language.
 *Pending*
 * [X] Create ~~FAISS~~ hnsw index for dataset
 * [ ] Publicize
-    * [ ] Create blog post
+    * [X] Create blog post
     * [ ] Post to some website
 * [X] Similar games
     * Given a game, use embeddings and compare to other games to find most similar
@@ -92,3 +92,7 @@ Search through steam games in natural language.
     * Are there any games that have a review that is more similar to another game's description than its own description?
 * [ ] 10_flask_api: Replace python wget with wget from apt
     * Python version of wget is like, 8 years old and probably awfully insecure...
+* [ ] 11_react_frontend: Add a "system status" indicator.
+    * Have status.txt file uploaded to azure storage somwhere (Hot tier)
+    * Fetch status.txt from frontend
+    * Display contents of status.txt in a status indicator
