@@ -72,7 +72,8 @@ Search through steam games in natural language.
 * [X] Create ~~FAISS~~ hnsw index for dataset
 * [ ] Publicize
     * [X] Create blog post
-    * [ ] Post to some website
+    * [X] Post to some website
+        * Posted, nobody cared lol
 * [X] Similar games
     * Given a game, use embeddings and compare to other games to find most similar
 * [ ] Specify distance algorithm
