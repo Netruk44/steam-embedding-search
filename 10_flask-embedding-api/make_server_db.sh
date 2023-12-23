@@ -9,20 +9,31 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
-# Create output by appending server_ to the front of the filename
-output_file="server_$1"
-
-# Copy the database file
-cp "$1" "$output_file"
+# Prompt user to confirm database file
+echo "Database file: $1"
+read -p "Is this the correct database file to remove tables from? (Y/n) " -n 1 -r
+echo
+if [[ ! $REPLY =~ ^Y$ ]]; then
+  echo "Exiting..."
+  exit 1
+fi
 
 # Remove the unnecessary tables
 echo "Removing tables..."
-sqlite3 "$output_file" "DROP TABLE appdetails;"
-sqlite3 "$output_file" "DROP TABLE appreviews;"
-sqlite3 "$output_file" "DROP TABLE lastupdate_appdetails;"
-sqlite3 "$output_file" "DROP TABLE lastupdate_appreviews;"
+
+echo " - appdetails..."
+sqlite3 "$1" "DROP TABLE appdetails;"
+
+echo " - appreviews..."
+sqlite3 "$1" "DROP TABLE appreviews;"
+
+echo " - lastupdate_appdetails..."
+sqlite3 "$1" "DROP TABLE lastupdate_appdetails;"
+
+echo " - lastupdate_appreviews..."
+sqlite3 "$1" "DROP TABLE lastupdate_appreviews;"
 
 echo "Vacuuming database..."
-sqlite3 "$output_file" "VACUUM;"
+sqlite3 "$1" "VACUUM;"
 
-echo "Done. Database file is $output_file."
+echo "Database ready to deploy."
