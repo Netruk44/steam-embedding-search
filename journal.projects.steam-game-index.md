@@ -97,3 +97,11 @@ Search through steam games in natural language.
     * Have status.txt file uploaded to azure storage somwhere (Hot tier)
     * Fetch status.txt from frontend
     * Display contents of status.txt in a status indicator
+
+
+### Itch.io
+
+* Any store listing page can be made into an api call by adding `.xml?page=<page_number>`.
+    * Example: `https://itch.io/games/newest.xml?page=2`
+* Rate limit (according to (the go itchio library)[https://github.com/itchio/go-itchio/blob/master/rate_limiter.go]) is 8 req/s with burst of ~15.
+    * Or 1 request every 125ms.
