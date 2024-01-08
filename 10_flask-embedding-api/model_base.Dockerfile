@@ -25,7 +25,7 @@ COPY prepare.py /app
 RUN python3 prepare.py
 
 # Copy database file
-# COPY steam_instructor-xl.db /app
+COPY server_steam_instructor-xl.db /app/steam_instructor-xl.db
 
 # Download database file
-RUN python -m wget -o /app/steam_instructor-xl.db http://netrukpub.z5.web.core.windows.net/steamvibes/server_steam_instructor-xl.db
+#RUN python -m wget -o /app/steam_instructor-xl.db http://netrukpub.z5.web.core.windows.net/steamvibes/server_steam_instructor-xl.db
