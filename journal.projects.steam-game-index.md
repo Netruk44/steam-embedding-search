@@ -94,6 +94,8 @@ Search through steam games in natural language.
 * [ ] 10_flask_api: Replace python wget with wget from apt
     * Python version of wget is like, 8 years old and probably awfully insecure...
 * [ ] 11_react_frontend: Add a "system status" indicator.
-    * Have status.txt file uploaded to azure storage somwhere (Hot tier)
+    * Have status.txt file uploaded to azure storage somewhere (Hot tier)
     * Fetch status.txt from frontend
     * Display contents of status.txt in a status indicator
+* [ ] 11_react_frontend: When searching by appid, display that game
+    * It's too hard to remember what game I pressed "more like this" on 🤦🏻‍♂️
