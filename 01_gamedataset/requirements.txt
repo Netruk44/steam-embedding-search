@@ -4,3 +4,6 @@ ratelimit
 tqdm
 tenacity
 click
+beautifulsoup4
+lxml
+html5lib

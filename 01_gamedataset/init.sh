@@ -1,6 +1,6 @@
 #!/bin/bash
 
-venv_dir=".venv_01"
+venv_dir=".venv_01a"
 
 # Check if .venv directory exists
 if [ -d "$venv_dir" ]; then
