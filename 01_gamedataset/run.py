@@ -86,7 +86,7 @@ def main(db, new, limit, update_all, update_type, verbose):
 
             try:
                 known_reviews = sqlite_helpers.get_appreview_recommendationids(conn, appid)
-                appreviews = get_n_reviews(appid, n = 100)
+                appreviews = get_n_reviews(appid, n = 500)
                 new_appreviews = [review for review in appreviews if int(review["recommendationid"]) not in known_reviews]
                 logging.debug("Found " + str(len(new_appreviews)) + " new reviews for appid " + str(appid) + ".")
                 sqlite_helpers.insert_appreviews(conn, appid, new_appreviews)
