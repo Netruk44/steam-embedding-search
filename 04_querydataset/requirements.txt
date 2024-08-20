@@ -1,7 +1,7 @@
 tqdm
 torch
 transformers
-sentence-transformers
+sentence-transformers==2.2.2
 InstructorEmbedding
 click
 hnswlib
