@@ -7,7 +7,7 @@ function App() {
   const [isSearching, setIsSearching] = useState(false);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [instruction, setInstruction] = useState('');
-  const [numResults, setNumResults] = useState(10);
+  const [numResults, setNumResults] = useState(25);
   const [type, setType] = useState('all');
 
   const doSearch = () => {
@@ -85,8 +85,6 @@ function App() {
       </form>
       <hr />
       <h2>Results</h2>
-      <p><strong>Note:</strong> Scores below 80% are usually not great matches.</p>
-      <p><strong>Note for the note:</strong> Scores above 80% do not guarantee a good match either 😊.</p>
       <div className="results-container">
         {searchResults.map((result, index) => (
             <div className="results-card" key={index}>
