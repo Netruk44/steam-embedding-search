@@ -315,7 +315,7 @@ def database_has_indexes_available(conn: sqlite3.Connection) -> bool:
     """
     logging.debug(f"Checking if database has an index available.")
 
-    required_tables = ['description_embeddings_hnsw_index', 'review_embeddings_hnsw_index']
+    required_tables = ['description_embeddings_hnsw_index', 'review_embeddings_hnsw_index', 'mixed_embeddings_hnsw_index']
     tables_exist = [check_table(conn, table_name) for table_name in required_tables]
     if not all(tables_exist):
         return False
@@ -333,7 +333,14 @@ def database_has_indexes_available(conn: sqlite3.Connection) -> bool:
     ''')
     review_index_count = c.fetchone()[0]
 
-    return description_index_count > 0 and review_index_count > 0
+    c.execute(f'''
+        SELECT count(*) FROM mixed_embeddings_hnsw_index
+    ''')
+    mixed_index_count = c.fetchone()[0]
+
+    c.close()
+
+    return description_index_count > 0 and review_index_count > 0 and mixed_index_count > 0
 
 def load_latest_description_index(conn: sqlite3.Connection) -> hnswlib.Index:
     """
@@ -386,3 +393,29 @@ def load_latest_review_index(conn: sqlite3.Connection) -> hnswlib.Index:
     c.close()
 
     return pickle.loads(review_index_pickle)
+
+def load_latest_mixed_index(conn: sqlite3.Connection) -> hnswlib.Index:
+    """
+    Loads the latest mixed index from the database.
+
+    Args:
+        conn (sqlite3.Connection): A connection to the SQLite database.
+
+    Returns:
+        hnswlib.Index: The mixed index.
+    """
+    logging.debug(f"Loading latest mixed index from database.")
+
+    c = conn.cursor()
+    
+    c.execute(f'''
+        SELECT pickle
+        FROM mixed_embeddings_hnsw_index
+        ORDER BY creation_time DESC
+        LIMIT 1
+    ''')
+    mixed_index_pickle = c.fetchone()[0]
+
+    c.close()
+
+    return pickle.loads(mixed_index_pickle)

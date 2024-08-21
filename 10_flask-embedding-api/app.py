@@ -16,6 +16,7 @@ import time
 instructor_model = None
 description_index = None
 review_index = None
+mixed_index = None
 
 app = Flask(__name__)
 
@@ -31,6 +32,7 @@ with app.app_context():
         logging.info('Loading indexes...')
         description_index = sqlite_helpers.load_latest_description_index(conn)
         review_index = sqlite_helpers.load_latest_review_index(conn)
+        mixed_index = sqlite_helpers.load_latest_mixed_index(conn)
     else:
         logging.fatal("No indexes found, exiting...")
         exit(1)
@@ -60,7 +62,7 @@ def get_query_results():
 
     type = request.args.get('type')
     type = 'all' if type is None else type
-    known_types = ['all', 'description', 'review']
+    known_types = ['all', 'description', 'review', 'mixed']
     if type not in known_types:
         return 'Invalid type, must be one of: {}'.format(', '.join(known_types)), 400
 
@@ -249,6 +251,26 @@ def index_search(conn, query, query_for_type, max_results=10):
                 'appid': appid,
                 'name': name,
                 'match_type': 'review',
+                'score': 1.0 - distance,
+            })
+    
+    # Mixed search - Pool store description and review embeddings
+    if query_for_type == 'all' or query_for_type == 'mixed':
+        global mixed_index
+        appids, distances = mixed_index.knn_query(query, k=max_results)
+
+        appids = appids[0]
+        distances = distances[0]
+
+        for appid, distance in zip(appids, distances):
+            appid = int(appid)
+            distance = float(distance)
+
+            name = sqlite_helpers.get_name_for_appid(conn, appid)
+            matches.append({
+                'appid': appid,
+                'name': name,
+                'match_type': 'mixed',
                 'score': 1.0 - distance,
             })
 

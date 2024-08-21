@@ -160,6 +160,26 @@ def add_review_index(conn: sqlite3.Connection, index: hnswlib.Index):
     conn.commit()
     c.close()
 
+def add_mixed_index(conn: sqlite3.Connection, index: hnswlib.Index):
+    """
+    Adds a mixed index to the SQLite database.
+
+    Args:
+        conn (sqlite3.Connection): A connection to the SQLite database.
+        index (hnswlib.Index): The index to add.
+    """
+    logging.debug("Adding mixed index to SQLite database")
+
+    c = conn.cursor()
+
+    c.execute('''
+        INSERT INTO mixed_embeddings_hnsw_index (pickle)
+        VALUES (?)
+    ''', (pickle.dumps(index),))
+
+    conn.commit()
+    c.close()
+
 def get_any_description_embeddings_list(conn: sqlite3.Connection) -> List[List[float]]:
     """
     Gets the first description embeddings list from the SQLite database.
@@ -226,6 +246,31 @@ def get_count_appids_with_review_embeddings(conn: sqlite3.Connection) -> int:
 
     return results
 
+def get_count_appids_with_description_and_review_embeddings(conn: sqlite3.Connection) -> int:
+    """
+    Gets the number of appids with both description and review embeddings from the SQLite database.
+
+    Args:
+        conn (sqlite3.Connection): A connection to the SQLite database.
+
+    Returns:
+        int: The number of appids with both description and review embeddings.
+    """
+
+    c = conn.cursor()
+
+    c.execute(f'''
+        SELECT COUNT(DISTINCT appid) FROM description_embeddings
+        WHERE appid IN (
+            SELECT DISTINCT appid FROM review_embeddings
+        )
+    ''')
+    results = c.fetchone()[0]
+
+    c.close()
+
+    return results
+
 def get_description_embeddings_batch(conn: sqlite3.Connection, page_size: int = 1000) -> Iterator[List[Tuple[int, List[List[float]]]]]:
     """
     Gets a generator for description embeddings in batches.
@@ -253,7 +298,7 @@ def get_description_embeddings_batch(conn: sqlite3.Connection, page_size: int = 
 
     c.close()
 
-def get_appids_with_reviews(conn: sqlite3.Connection) -> List[int]:
+def get_appids_with_review_embeddings(conn: sqlite3.Connection) -> List[int]:
     """
     Gets the appids with reviews from the SQLite database.
 
@@ -268,6 +313,28 @@ def get_appids_with_reviews(conn: sqlite3.Connection) -> List[int]:
 
     c.execute(f'''
         SELECT DISTINCT appid FROM review_embeddings
+    ''')
+    results = c.fetchall()
+
+    c.close()
+
+    return [appid for appid, in results]
+
+def get_appids_with_description_embeddings(conn: sqlite3.Connection) -> List[int]:
+    """
+    Gets the appids with descriptions from the SQLite database.
+
+    Args:
+        conn (sqlite3.Connection): A connection to the SQLite database.
+
+    Returns:
+        Set[int]: The appids with descriptions.
+    """
+
+    c = conn.cursor()
+
+    c.execute(f'''
+        SELECT DISTINCT appid FROM description_embeddings
     ''')
     results = c.fetchall()
 
