@@ -33,6 +33,20 @@ sqlite3 "$1" "DROP TABLE lastupdate_appdetails;"
 echo " - lastupdate_appreviews..."
 sqlite3 "$1" "DROP TABLE lastupdate_appreviews;"
 
+
+# Remove unnecessary indexes
+echo "Removing old hnsw indexes..."
+
+echo " - description_embeddings_hnsw_index..."
+sqlite3 "$1" "DELETE FROM description_embeddings_hnsw_index WHERE creation_time < (SELECT MAX(creation_time) FROM description_embeddings_hnsw_index);"
+
+echo " - review_embeddings_hnsw_index..."
+sqlite3 "$1" "DELETE FROM review_embeddings_hnsw_index WHERE creation_time < (SELECT MAX(creation_time) FROM review_embeddings_hnsw_index);"
+
+echo " - mixed_embeddings_hnsw_index..."
+sqlite3 "$1" "DELETE FROM mixed_embeddings_hnsw_index WHERE creation_time < (SELECT MAX(creation_time) FROM mixed_embeddings_hnsw_index);"
+
+
 echo "Vacuuming database..."
 sqlite3 "$1" "VACUUM;"
 
