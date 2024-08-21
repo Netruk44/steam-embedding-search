@@ -117,7 +117,7 @@ def get_similar_games():
     type = request.args.get('type')
     type = 'all' if type is None else type
 
-    if type not in ['all', 'description', 'review']:
+    if type not in ['all', 'description', 'review', 'mixed']:
         return 'Invalid type, must be one of: all, description, review', 400
 
     logging.info(f'Request: {request.url}')
@@ -161,52 +161,6 @@ def add_to_heap(heap: List[dict], item_to_add: dict, max_length: int):
     # Pop if too large
     if len(heap) > max_length:
         heapq.heappop(heap)
-
-
-def search(conn, query_embed, query_for_type, max_results=10):
-    matches = []
-    logging.debug(f"Searching for {query_for_type} matches")
-
-    # Store Description Search
-    if query_for_type == 'all' or query_for_type == 'description':
-        for current_page in sqlite_helpers.get_paginated_embeddings_for_descriptions(conn, page_size=100):
-            for appid, embeddings in current_page.items():
-                score = compare_all_embeddings_take_max(embeddings, query_embed)
-                name = sqlite_helpers.get_name_for_appid(conn, appid)
-
-                add_to_heap(matches, {
-                    'appid': appid,
-                    'name': name,
-                    'match_type': 'description',
-                    'score': float(score),
-                }, max_results)
-    
-    # Review Search
-    if query_for_type == 'all' or query_for_type == 'review':
-        appids_with_reviews = sqlite_helpers.get_appids_with_review_embeds(conn)
-
-        for appid in appids_with_reviews:
-            all_review_embeddings = sqlite_helpers.get_review_embeddings_for_appid(conn, appid)
-            flat_embeddings = [review_embedding for review_id in all_review_embeddings for review_embedding in all_review_embeddings[review_id]]
-            average_embedding = mean_pooling(flat_embeddings)
-
-            score = cosine_similarity(average_embedding, query_embed)
-            name = sqlite_helpers.get_name_for_appid(conn, appid)
-
-            add_to_heap(matches, {
-                'appid': appid,
-                'name': name,
-                'match_type': 'review',
-                'score': float(score),
-            }, max_results)
-    
-    # Sort by score (first element of tuple)
-    matches.sort(key=lambda x: x[0], reverse=True)
-
-    # Remove scores and random numbers
-    matches = [match[2] for match in matches]
-
-    return matches
 
 def index_search(conn, query, query_for_type, max_results=10):
     matches = []
@@ -288,65 +242,6 @@ def index_search(conn, query, query_for_type, max_results=10):
 
     return deduped_matches[:max_results]
 
-def search_similar(conn, query_appid, query_for_type, max_results=10):
-    matches = []
-    logging.debug(f"Searching for similar games to {sqlite_helpers.get_name_for_appid(conn, query_appid)}")
-
-    # Store Description Search
-    if query_for_type == 'all' or query_for_type == 'description':
-        all_description_embeddings = sqlite_helpers.get_description_embeddings_for_appid(conn, query_appid)
-        query_embed = mean_pooling(all_description_embeddings)
-
-        for current_page in sqlite_helpers.get_paginated_embeddings_for_descriptions(conn, page_size=100):
-            for current_appid, embeddings in current_page.items():
-                if current_appid == query_appid:
-                    continue
-
-                score = compare_all_embeddings_take_max(embeddings, query_embed)
-                name = sqlite_helpers.get_name_for_appid(conn, current_appid)
-
-                add_to_heap(matches, {
-                    'appid': current_appid,
-                    'name': name,
-                    'match_type': 'description',
-                    'score': float(score),
-                }, max_results)
-
-    # Review search v2 - Calculate average embedding for all reviews / mean pooling
-    if query_for_type == 'all' or query_for_type == 'review':
-        query_review_embeddings = sqlite_helpers.get_review_embeddings_for_appid(conn, query_appid)
-        query_flat_embeddings = [review_embedding for review_id in query_review_embeddings for review_embedding in query_review_embeddings[review_id]]
-        query_embed = mean_pooling(query_flat_embeddings)
-
-        appids_with_reviews = sqlite_helpers.get_appids_with_review_embeds(conn)
-
-        for current_appid in appids_with_reviews:
-            if current_appid == query_appid:
-                continue
-            
-            all_review_embeddings = sqlite_helpers.get_review_embeddings_for_appid(conn, current_appid)
-            flat_embeddings = [review_embedding for review_id in all_review_embeddings for review_embedding in all_review_embeddings[review_id]]
-            average_embedding = mean_pooling(flat_embeddings)
-
-            score = cosine_similarity(average_embedding, query_embed)
-            #score = euclidean_distance(average_embedding, query_embed)
-            name = sqlite_helpers.get_name_for_appid(conn, current_appid)
-
-            add_to_heap(matches, {
-                'appid': current_appid,
-                'name': name,
-                'match_type': 'review',
-                'score': float(score),
-            }, max_results)
-
-    # Sort by score (first element of tuple)
-    matches.sort(key=lambda x: x[0], reverse=True)
-
-    # Remove scores and random numbers
-    matches = [match[2] for match in matches]
-
-    return matches
-
 def index_search_similar(conn, query_appid, query_for_type, max_results=10):
     matches = []
     logging.debug(f"Searching for similar games to {sqlite_helpers.get_name_for_appid(conn, query_appid)}")
@@ -407,6 +302,51 @@ def index_search_similar(conn, query_appid, query_for_type, max_results=10):
                 'appid': appid,
                 'name': name,
                 'match_type': 'review',
+                'score': 1.0 - distance,
+            })
+
+    # Mixed search - Pool store description and review embeddings
+    if query_for_type == 'all' or query_for_type == 'mixed':
+        global mixed_index
+
+        all_description_embeddings = sqlite_helpers.get_description_embeddings_for_appid(conn, query_appid)
+        all_review_embeddings = sqlite_helpers.get_review_embeddings_for_appid(conn, query_appid)
+
+        if len(all_review_embeddings) == 0:
+            logging.info(f"No reviews found for {sqlite_helpers.get_name_for_appid(conn, query_appid)}")
+            query_embed = mean_pooling(all_description_embeddings)
+        elif len(all_description_embeddings) == 0:
+            logging.info(f"No description found for {sqlite_helpers.get_name_for_appid(conn, query_appid)}")
+            flat_embeddings = [review_embedding for review_id in all_review_embeddings for review_embedding in all_review_embeddings[review_id]]
+            query_embed = mean_pooling(flat_embeddings)
+        else:
+            # Weighted average of description and review embeddings
+            review_weight = 0.7
+            description_weight = 1.0 - review_weight
+
+            description_embed = mean_pooling(all_description_embeddings)
+            flat_embeddings = [review_embedding for review_id in all_review_embeddings for review_embedding in all_review_embeddings[review_id]]
+            review_embed = mean_pooling(flat_embeddings)
+
+            query_embed = description_weight * description_embed + review_weight * review_embed
+
+        appids, distances = mixed_index.knn_query(query_embed, k=max_results + 1)
+
+        appids = appids[0]
+        distances = distances[0]
+
+        for appid, distance in zip(appids, distances):
+            appid = int(appid)
+            distance = float(distance)
+
+            if appid == query_appid:
+                continue
+
+            name = sqlite_helpers.get_name_for_appid(conn, appid)
+            matches.append({
+                'appid': appid,
+                'name': name,
+                'match_type': 'mixed',
                 'score': 1.0 - distance,
             })
 
