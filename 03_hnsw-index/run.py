@@ -118,13 +118,15 @@ def get_mixed_by_appid_batched(conn: sqlite3.Connection, page_size: int = 1000) 
   appids = list(appids_with_description_embeddings.intersection(appids_with_reviews))
 
   for i in range(0, len(appids), page_size):
+    page = []
     for appid in appids[i:i+page_size]:
       description_embedding = pool_description_embeddings(sqlite_helpers.get_description_embeddings_for_appid(conn, appid))
       review_embedding = pool_review_embeddings(sqlite_helpers.get_review_embeddings_for_appid(conn, appid))
       # Weighted average of description and review embeddings
       # 70% review, 30% description (chosen arbitrarily by gut feeling)
       final_embedding = 0.7 * review_embedding + 0.3 * description_embedding
-      yield [(appid, final_embedding)]
+      page.append((appid, final_embedding))
+    yield page
 
 def create_index(
   conn: sqlite3.Connection, 
