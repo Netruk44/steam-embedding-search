@@ -125,6 +125,22 @@ def remove_old_indexes(conn: sqlite3.Connection):
     ''')
     logging.debug(f"Removed {c.rowcount} old review indexes")
 
+    c.execute('''
+        DELETE FROM mixed_embeddings_hnsw_index
+        WHERE index_id NOT IN (
+            SELECT index_id
+            FROM mixed_embeddings_hnsw_index
+            ORDER BY creation_time DESC
+            LIMIT 1
+        )
+    ''')
+    logging.debug(f"Removed {c.rowcount} old mixed indexes")
+
+    logging.info("VACUUMing database to reclaim space, this may take a while...")
+    c.execute('''
+        VACUUM
+    ''')
+
     conn.commit()
     c.close()
 
