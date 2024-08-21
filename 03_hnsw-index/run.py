@@ -119,7 +119,7 @@ def get_reviews_by_appid_batched(conn: sqlite3.Connection, page_size: int = 1000
   for i in range(0, len(appids), page_size):
     yield [(appid, pool_review_embeddings(sqlite_helpers.get_review_embeddings_for_appid(conn, appid))) for appid in appids[i:i+page_size]]
 
-def get_mixed_by_appid_batched(conn: sqlite3.Connection, page_size: int = 1000, review_weight: float = 0.5) -> Iterator[List[Tuple[int, List[float]]]]:
+def get_mixed_by_appid_batched(conn: sqlite3.Connection, page_size: int = 1000, review_weight: float = 0.7) -> Iterator[List[Tuple[int, List[float]]]]:
   appids_with_description_embeddings = set(sqlite_helpers.get_appids_with_description_embeddings(conn))
   appids_with_reviews = set(sqlite_helpers.get_appids_with_review_embeddings(conn))
   appids = list(appids_with_description_embeddings.union(appids_with_reviews))
@@ -143,7 +143,7 @@ def get_mixed_by_appid_batched(conn: sqlite3.Connection, page_size: int = 1000, 
         page.append((appid, review_embedding))
       else:
         # Weighted average of description and review embeddings
-        # Default of 0.5 was chosen mostly arbitrarily
+        # Default of 0.7 was chosen mostly arbitrarily
         description_embedding = pool_description_embeddings(all_description_embeddings)
         review_embedding = pool_review_embeddings(all_review_embeddings)
         final_embedding = review_weight * review_embedding + (1.0 - review_weight) * description_embedding
@@ -164,7 +164,7 @@ def create_index(
   index = hnswlib.Index(space='cosine', dim=dim)
   index.init_index(max_elements=num_elements, ef_construction=ef_construct, M=M)
   index.set_ef(ef_recall)
-  
+
   bar = tqdm.tqdm(total=num_elements, desc="Creating index", smoothing=0.9)
 
   for batch in get_batches(conn):
