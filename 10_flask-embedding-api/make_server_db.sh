@@ -11,6 +11,7 @@ fi
 
 # Prompt user to confirm database file
 echo "Database file: $1"
+echo "WARNING: Modifying this database directly! Make sure you have a copy of the original database file."
 read -p "Is this the correct database file to remove tables from? (Y/n) " -n 1 -r
 echo
 if [[ ! $REPLY =~ ^Y$ ]]; then
