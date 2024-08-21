@@ -81,6 +81,14 @@ def create_output_db_tables(conn: sqlite3.Connection):
         )
     ''')
 
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS mixed_embeddings_hnsw_index (
+            index_id INTEGER PRIMARY KEY,
+            creation_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            pickle BLOB NOT NULL
+        )
+    ''')
+
     conn.commit()
     c.close()
 
