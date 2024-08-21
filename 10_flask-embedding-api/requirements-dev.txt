@@ -4,5 +4,4 @@ transformers
 sentence-transformers==2.2.2
 InstructorEmbedding
 gunicorn
-wget
 hnswlib
