@@ -254,25 +254,27 @@ def get_count_appids_with_review_embeddings(conn: sqlite3.Connection) -> int:
 
     return results
 
-def get_count_appids_with_description_and_review_embeddings(conn: sqlite3.Connection) -> int:
+def get_count_appids_with_description_or_review_embeddings(conn: sqlite3.Connection) -> int:
     """
-    Gets the number of appids with both description and review embeddings from the SQLite database.
+    Gets the number of appids with either description or review embeddings from the SQLite database.
 
     Args:
         conn (sqlite3.Connection): A connection to the SQLite database.
 
     Returns:
-        int: The number of appids with both description and review embeddings.
+        int: The number of appids with either description or review embeddings.
     """
 
     c = conn.cursor()
 
     c.execute(f'''
-        SELECT COUNT(DISTINCT appid) FROM description_embeddings
-        WHERE appid IN (
-            SELECT DISTINCT appid FROM review_embeddings
+        SELECT COUNT(DISTINCT appid) FROM (
+            SELECT appid FROM description_embeddings
+            UNION
+            SELECT appid FROM review_embeddings
         )
     ''')
+
     results = c.fetchone()[0]
 
     c.close()
@@ -373,3 +375,33 @@ def get_review_embeddings_for_appid(conn: sqlite3.Connection, appid: int) -> Dic
     c.close()
 
     return {recommendationid: pickle.loads(embedding) for recommendationid, embedding in results}
+
+def get_description_embeddings_for_appid(conn: sqlite3.Connection, appid: int) -> List[List[float]]:
+    """
+    Gets the description embeddings for an appid from the SQLite database.
+
+    Args:
+        conn (sqlite3.Connection): A connection to the SQLite database.
+        appid (int): The appid to get the description embeddings for.
+
+    Returns:
+        List[List[float]]: The description embeddings for the appid.
+    """
+
+    c = conn.cursor()
+
+    c.execute(f'''
+        SELECT embedding FROM description_embeddings
+        WHERE appid = ?
+    ''', (appid,))
+    results = c.fetchall()
+
+    c.close()
+
+    if len(results) == 0:
+        return []
+    #    raise ValueError(f'No review embeddings found for appid {appid}')
+
+    #return [pickle.loads(embedding) for embedding, in results]
+    embedding, = results[0]
+    return pickle.loads(embedding)
