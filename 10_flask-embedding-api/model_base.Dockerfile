@@ -4,7 +4,7 @@ FROM python:3.11-slim-bookworm
 
 # Install c++ build tools (required by hnswlib)
 RUN apt-get update && apt-get install -y \
-    g++ \
+    g++ wget \
     && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory to /app
@@ -28,4 +28,4 @@ RUN python3 prepare.py
 # COPY steam_instructor-xl.db /app
 
 # Download database file
-RUN python -m wget -o /app/steam_instructor-xl.db http://netrukpub.z5.web.core.windows.net/steamvibes/server_steam_instructor-xl.db
+RUN wget -o /app/steam_instructor-xl.db http://netrukpub.z5.web.core.windows.net/steamvibes/server_steam_instructor-xl.db
