@@ -28,4 +28,4 @@ RUN python3 prepare.py
 # COPY steam_instructor-xl.db /app
 
 # Download database file
-RUN wget -o /app/steam_instructor-xl.db http://netrukpub.z5.web.core.windows.net/steamvibes/server_steam_instructor-xl.db
+RUN wget -O /app/steam_instructor-xl.db http://netrukpub.z5.web.core.windows.net/steamvibes/server_steam_instructor-xl.db
