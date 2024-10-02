@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 function App() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -9,6 +9,7 @@ function App() {
   const [instruction, setInstruction] = useState('');
   const [numResults, setNumResults] = useState(25);
   const [type, setType] = useState('all');
+  const formRef = useRef(null);
 
   // Azure Host:
   // const API_BASE_URL = 'https://steamvibe-api.azurewebsites.net';
@@ -21,7 +22,9 @@ function App() {
 
     fetch(`${API_BASE_URL}/get_results?query=${encodeURIComponent(searchTerm)}&instruction=${encodeURIComponent(instruction)}&num_results=${numResults}&type=${type}`)
       .then(response => response.json())
-      .then(data => setSearchResults(data))
+      .then(data => {
+        setSearchResults(data)
+      })
       .catch(error => console.error('Error:', error))
       .finally(() => setIsSearching(false));
   }
@@ -32,7 +35,9 @@ function App() {
 
     fetch(`${API_BASE_URL}/get_results?query=${encodeURIComponent(searchTerm)}&instruction=${encodeURIComponent(instruction)}&num_results=${numResults}&type=${type}`)
       .then(response => response.json())
-      .then(data => setSearchResults(data))
+      .then(data => {
+        setSearchResults(data)
+      })
       .catch(error => console.error('Error:', error))
       .finally(() => setIsSearching(false));
   }
@@ -41,6 +46,12 @@ function App() {
     event.preventDefault();
     doSearch();
   };
+
+  useEffect(() => {
+    if (searchResults.length > 0) {
+      formRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [searchResults]);
 
   return (
     <div>
@@ -66,7 +77,7 @@ function App() {
         <li>To get the appid of a game, go to the Steam Store page for it:</li>
         <li><img src={process.env.PUBLIC_URL + "/appid.png"} style={{ maxWidth: '100%', height: 'auto' }} /></li>
       </ul>
-      <form onSubmit={handleSearch}>
+      <form onSubmit={handleSearch} id="search-form" ref={formRef}>
         <label htmlFor="search">Description / AppID:</label>
         <textarea 
           rows="4" 
