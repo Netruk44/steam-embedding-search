@@ -1,7 +1,43 @@
 
+
 # Use an official Python runtime as a parent image
-FROM steamvibes-api-base:v0.4.1
+FROM python:3.11-slim-bookworm AS image-base
+
+# Install c++ build tools (required by hnswlib)
+RUN apt-get update && apt-get install -y \
+    g++ wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set the working directory to /app
+WORKDIR /app
+
+# Copy the requirements file into the container at /app
+COPY requirements.txt /app
+
+# Install any needed packages specified in requirements.txt
+RUN pip install --trusted-host pypi.python.org -r requirements.txt
+
+# Copy prepare script and supporting files into the container at /app
+COPY config.py /app
+COPY instructor_model.py /app
+COPY prepare.py /app
+
+# Run prepare script
+RUN python3 prepare.py
+
+# Copy database file
+COPY steam_instructor-xl.db /app
+
+# Download database file
+#RUN wget -O /app/steam_instructor-xl.db http://netrukpub.z5.web.core.windows.net/steamvibes/server_steam_instructor-xl.db
+
+
+
+
+# Use an official Python runtime as a parent image
+#FROM steamvibes-api-base:v0.4.1
 #FROM netruk44.azurecr.io/steamvibes-api-base:latest
+FROM image-base
 
 # Set the working directory to /app
 WORKDIR /app

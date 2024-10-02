@@ -1,0 +1,3 @@
+
+GET localhost:5000/get_results?query="hello"
+

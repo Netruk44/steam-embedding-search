@@ -1,7 +1,7 @@
 
 ## Live Demo
 ![](./images/project_preview.png)
-See the react interface live [here](https://azstatic.danieltperry.me/steamvibes/build) (for as long as I keep the API running).
+See the react interface live [here](https://storage.danieltperry.me/share/steamvibes/build/) (for as long as I keep the API running).
 
 ## Description
 Search for Steam games based off a text description.
