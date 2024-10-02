@@ -47,7 +47,8 @@ function App() {
       <h1>Embedding-Based Steam Search</h1>
       <div className="source">
         <img src={process.env.PUBLIC_URL + "/GitHub-logo.png"} style={{ maxWidth: '24px', height: 'auto' }} /><strong>Source:</strong><a href="https://github.com/Netruk44/steam-embedding-search">Netruk44/steam-embedding-search</a><br />
-        <img src="https://www.danieltperry.me/ico/favicon-32x32.png" style={{ maxWidth: '24px', height: 'auto' }} /><strong>Dev Journal:</strong> On my <a href="https://www.danieltperry.me/post/instructor-as-search-engine/">personal website</a>.
+        <img src="https://www.danieltperry.me/ico/favicon-32x32.png" style={{ maxWidth: '24px', height: 'auto' }} /><strong>Dev Journal:</strong> On my <a href="https://www.danieltperry.me/post/instructor-as-search-engine/">personal website</a>.<br />
+        <strong>Game database last updated:</strong>2024-08-21
       </div>
       <p>Describe the kind of game you're looking for, see what you get!</p>
       <p><i>e.g. "An open world exploration-based game featuring resource gathering."</i></p>
