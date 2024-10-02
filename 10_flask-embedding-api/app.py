@@ -99,7 +99,8 @@ def get_query_results():
     )
 
     # TODO: Limit this to the domain of the frontend
-    response.headers['Access-Control-Allow-Origin'] = '*'
+    #response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Origin'] = 'https://storage.danieltperry.me'
 
     return response
 
