@@ -85,6 +85,7 @@ function App() {
               <option value="all">All</option>
               <option value="description">Description</option>
               <option value="review">Review</option>
+              <option value="mixed">Mixed</option>
             </select>
           </div>
         )}
