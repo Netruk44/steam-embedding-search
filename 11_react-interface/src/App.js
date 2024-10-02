@@ -96,7 +96,6 @@ function App() {
       </form>
       <hr />
       <h2>Results</h2>
-      <p>Database last updated: 2024-08-19</p>
       <div className="results-container">
         {searchResults.map((result, index) => (
             <div className="results-card" key={index}>
