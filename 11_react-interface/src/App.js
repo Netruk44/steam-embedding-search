@@ -10,10 +10,16 @@ function App() {
   const [numResults, setNumResults] = useState(25);
   const [type, setType] = useState('all');
 
+  // Azure Host:
+  // const API_BASE_URL = 'https://steamvibe-api.azurewebsites.net';
+
+  // Personal Host:
+  const API_BASE_URL = 'https://storage.danieltperry.me/steam_search';
+
   const doSearch = () => {
     setIsSearching(true);
 
-    fetch(`https://steamvibe-api.azurewebsites.net/get_results?query=${encodeURIComponent(searchTerm)}&instruction=${encodeURIComponent(instruction)}&num_results=${numResults}&type=${type}`)
+    fetch(`${API_BASE_URL}/get_results?query=${encodeURIComponent(searchTerm)}&instruction=${encodeURIComponent(instruction)}&num_results=${numResults}&type=${type}`)
       .then(response => response.json())
       .then(data => setSearchResults(data))
       .catch(error => console.error('Error:', error))
@@ -24,13 +30,12 @@ function App() {
     setIsSearching(true);
     setSearchTerm(searchTerm);
 
-    fetch(`https://steamvibe-api.azurewebsites.net/get_results?query=${encodeURIComponent(searchTerm)}&instruction=${encodeURIComponent(instruction)}&num_results=${numResults}&type=${type}`)
+    fetch(`${API_BASE_URL}/get_results?query=${encodeURIComponent(searchTerm)}&instruction=${encodeURIComponent(instruction)}&num_results=${numResults}&type=${type}`)
       .then(response => response.json())
       .then(data => setSearchResults(data))
       .catch(error => console.error('Error:', error))
       .finally(() => setIsSearching(false));
   }
-
 
   const handleSearch = (event) => {
     event.preventDefault();
@@ -67,7 +72,6 @@ function App() {
             <h3>Advanced Options</h3>
             <label htmlFor="instruction">Instruction:</label>
             <input type="text" value={instruction} onChange={(event) => setInstruction(event.target.value)} placeholder="Represent a video game that has a description of:" />
-            <label htmlFor="numResults">Number of Results:</label>
             <input type="number" value={numResults} onChange={(event) => setNumResults(event.target.value)} min="1" max="100" /> <br />
             <label htmlFor="type">Type:</label>
             <select id="type" value={type} onChange={(event) => setType(event.target.value)}>
