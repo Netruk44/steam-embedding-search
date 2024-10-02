@@ -1,10 +1,11 @@
 
-version: "3.8"
-
 services:
   steamvibe-api:
-    image: steamvibes-api:v0.1_x64
+    image: steamvibes-api:latest
+    build:
+      context: ./
     ports:
       - 5000:5000
+    restart: on-failure
     environment:
       TOKENIZERS_PARALLELISM: "false"
