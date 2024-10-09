@@ -4,8 +4,12 @@ services:
     image: steamvibes-api:latest
     build:
       context: ./
-    ports:
-      - 5000:5000
+    # This docker-compose is set up assuming a reverse proxy in front of the app (like nginx).
+    # If you want to host this without a reverse proxy, uncomment 'ports' and comment out 'expose'
+    #ports:
+    #  - 5000:5000
+    expose:
+       - 5000
     restart: on-failure
     environment:
       TOKENIZERS_PARALLELISM: "false"
