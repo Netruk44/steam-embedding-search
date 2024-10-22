@@ -107,6 +107,7 @@ function App() {
           {isAdvancedOpen ? 'Hide Advanced' : 'Open Advanced'}
         </button>
       </form>
+      <p><i><b>Note:</b> It may take a long time (over 45 seconds) for the results to come back if nobody has used the app in a while. Additional queries past the first one should be significantly faster.</i></p>
       <hr />
       <h2>Results</h2>
       <div className="results-container">
